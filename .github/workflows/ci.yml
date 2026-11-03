@@ -17,8 +17,8 @@ jobs:
       matrix:
         python: ["3.11", "3.14"]   # oldest supported / Ubuntu 26.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
       - name: System libraries
@@ -43,10 +43,10 @@ jobs:
       matrix:
         image: ["ubuntu:26.04"]   # add further releases here, e.g. "ubuntu:26.10"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build, lint and smoke-test
         run: bash scripts/ci/build-deb.sh "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE/dist"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: deb-${{ strategy.job-index }}
           path: dist/*.deb
