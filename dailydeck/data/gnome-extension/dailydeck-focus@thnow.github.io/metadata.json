@@ -1,0 +1,15 @@
+{
+  "uuid": "dailydeck-focus@thnow.github.io",
+  "name": "Daily Deck Focus Bridge",
+  "description": "Exposes the currently focused window (WM class, app id, title) on the session D-Bus as io.github.thnow.dailydeck.Focus, so Daily Deck can switch profiles on Wayland.",
+  "shell-version": [
+    "45",
+    "46",
+    "47",
+    "48",
+    "49",
+    "50"
+  ],
+  "version": 1,
+  "url": "https://github.com/thnow/dailydeck"
+}

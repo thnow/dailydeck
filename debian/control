@@ -1,0 +1,51 @@
+Source: dailydeck
+Section: utils
+Priority: optional
+Maintainer: Thomas Wittmann <nowotny.thomas@gmail.com>
+Build-Depends: debhelper-compat (= 13),
+               dh-python,
+               pybuild-plugin-pyproject,
+               python3-all,
+               python3-setuptools,
+               python3-pytest <!nocheck>,
+               python3-pil <!nocheck>,
+               python3-tomli-w <!nocheck>,
+               libxkbcommon0 <!nocheck>,
+               xkb-data <!nocheck>
+Standards-Version: 4.7.2
+Homepage: https://github.com/thnow/dailydeck
+Vcs-Browser: https://github.com/thnow/dailydeck
+Vcs-Git: https://github.com/thnow/dailydeck.git
+Rules-Requires-Root: no
+
+Package: dailydeck
+Architecture: all
+Depends: ${misc:Depends},
+         ${python3:Depends},
+         python3-elgato-streamdeck,
+         python3-pil,
+         python3-evdev,
+         python3-jeepney,
+         python3-tomli-w,
+         python3-pyside6.qtcore,
+         python3-pyside6.qtgui,
+         python3-pyside6.qtwidgets,
+         libhidapi-libusb0,
+         libxkbcommon0,
+         librsvg2-2,
+         fontconfig,
+         libglib2.0-bin
+Recommends: gnome-shell-ubuntu-extensions | gnome-shell-extension-appindicator,
+            x11-utils
+Description: Stream Deck shows the keyboard shortcuts of the focused window
+ Daily Deck turns an Elgato Stream Deck into a context sensitive shortcut
+ pad: whenever another application gets the focus, the deck switches to that
+ application's profile and shows its shortcuts. Pressing a key sends the
+ shortcut, translated for the active keyboard layout.
+ .
+ Features: application icon across the whole deck, a profile editor with live
+ preview on the device, shortcut recording, exchangeable profile files and a
+ tray icon for quick settings. Window detection works on GNOME (Wayland and
+ X11, via a bundled GNOME Shell extension) and other X11 desktops.
+ .
+ This package is not affiliated with Elgato or Corsair.

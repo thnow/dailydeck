@@ -1,0 +1,46 @@
+.TH DAILYDECK 1 "2026-11-03" "dailydeck 0.1.0" "User Commands"
+.SH NAME
+dailydeck \- Stream Deck shows the keyboard shortcuts of the focused window
+.SH SYNOPSIS
+.B dailydeck
+[\fB\-c\fR \fIFILE\fR] [\fB\-v\fR]
+[\fB\-\-tray\fR | \fB\-\-gui\fR | \fB\-\-print\-focus\fR | \fB\-\-dry\-run\fR \fISHORTCUT\fR | \fB\-\-preview\fR \fIDIR\fR]
+.SH DESCRIPTION
+.B dailydeck
+switches an Elgato Stream Deck to the profile of the application that has the focus and
+sends the configured shortcut when a key is pressed.
+Without a mode option it runs as a daemon without user interface.
+.SH OPTIONS
+.TP
+.BR \-c ", " \-\-config " " \fIFILE\fR
+Configuration file (default: \fI~/.config/dailydeck/config.toml\fR, created on first start).
+.TP
+.BR \-v ", " \-\-verbose
+Debug logging.
+.TP
+.B \-\-tray
+Run with an icon in the top bar / notification area (quick settings, editor).
+.TP
+.B \-\-gui
+Open the profile editor.
+.TP
+.B \-\-print\-focus
+Print the identifiers of the focused window whenever they change.
+.TP
+.BI \-\-dry\-run " SHORTCUT"
+Show which physical keys a shortcut would press, without pressing them.
+.TP
+.BI \-\-preview " DIR"
+Render all profiles as PNG images into \fIDIR\fR.
+.SH FILES
+.TP
+.I ~/.config/dailydeck/config.toml
+Profiles and settings; reloaded automatically when changed.
+.TP
+.I /usr/lib/udev/rules.d/60-dailydeck.rules
+Access to the Stream Deck and /dev/uinput for the logged-in user.
+.TP
+.I /usr/share/gnome-shell/extensions/dailydeck-focus@thnow.github.io
+GNOME Shell extension that reports the focused window on Wayland.
+.SH SEE ALSO
+.BR udev (7)

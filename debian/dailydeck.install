@@ -1,0 +1,7 @@
+dailydeck/data/gnome-extension/dailydeck-focus@thnow.github.io usr/share/gnome-shell/extensions/
+dailydeck/data/io.github.thnow.dailydeck.svg usr/share/icons/hicolor/scalable/apps/
+data/linux/io.github.thnow.dailydeck.desktop usr/share/applications/
+data/linux/io.github.thnow.dailydeck.Editor.desktop usr/share/applications/
+data/linux/60-dailydeck.rules usr/lib/udev/rules.d/
+data/linux/dailydeck.service usr/lib/systemd/user/
+data/linux/io.github.thnow.dailydeck.metainfo.xml usr/share/metainfo/

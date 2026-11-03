@@ -1,0 +1,9 @@
+# dailydeck: device access for the user logged in at the seat (systemd-logind "uaccess").
+# Must sort before 73-seat-late.rules.
+
+# Elgato Stream Deck (all models): USB device (hidapi libusb backend) and hidraw node
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0fd9", TAG+="uaccess"
+KERNEL=="hidraw*", ATTRS{idVendor}=="0fd9", TAG+="uaccess"
+
+# /dev/uinput: the virtual keyboard that sends the shortcuts
+KERNEL=="uinput", SUBSYSTEM=="misc", TAG+="uaccess", OPTIONS+="static_node=uinput"

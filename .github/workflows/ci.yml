@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Lint & test (Python ${{ matrix.python }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.14"]   # oldest supported / Ubuntu 26.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: System libraries
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libxkbcommon0 xkb-data libegl1 libgl1 libdbus-1-3 fontconfig
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Versions consistent
+        run: python scripts/version.py check
+      - name: Ruff
+        run: ruff check .
+      - name: Tests
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: pytest -q
+
+  deb:
+    name: Ubuntu package (${{ matrix.image }})
+    runs-on: ubuntu-24.04
+    container: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ["ubuntu:26.04"]   # add further releases here, e.g. "ubuntu:26.10"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build, lint and smoke-test
+        run: bash scripts/ci/build-deb.sh "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE/dist"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deb-${{ strategy.job-index }}
+          path: dist/*.deb
+          retention-days: 14

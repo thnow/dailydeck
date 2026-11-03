@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dailydeck"
+dynamic = ["version"]
+description = "Daily Deck: the Stream Deck shows the keyboard shortcuts of the focused window"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [{ name = "Thomas Wittmann", email = "nowotny.thomas@gmail.com" }]
+requires-python = ">=3.11"
+classifiers = [
+    "Environment :: X11 Applications :: Qt",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "streamdeck>=0.9",
+    "pillow>=10",
+    "tomli-w>=1.0",
+    "PySide6-Essentials>=6.6",
+    "evdev>=1.6; sys_platform == 'linux'",
+    "jeepney>=0.8; sys_platform == 'linux'",
+    "pynput>=1.7; sys_platform != 'linux'",
+    "pyobjc-framework-Cocoa>=10; sys_platform == 'darwin'",
+]
+
+[project.urls]
+Homepage = "https://github.com/thnow/dailydeck"
+Issues = "https://github.com/thnow/dailydeck/issues"
+Changelog = "https://github.com/thnow/dailydeck/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "ruff>=0.6"]
+
+[project.scripts]
+dailydeck = "dailydeck.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["dailydeck*"]
+namespaces = true  # dailydeck/data holds package data without __init__.py
+
+[tool.setuptools.dynamic]
+version = { attr = "dailydeck.__version__" }
+
+[tool.setuptools.package-data]
+dailydeck = ["data/*.toml", "data/*.svg", "data/gnome-extension/*/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E731"]

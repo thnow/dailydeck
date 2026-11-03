@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Daily Deck
+Comment=Show the keyboard shortcuts of the focused window on the Stream Deck
+Comment[de]=Zeigt die Tastenkürzel des aktiven Fensters auf dem Stream Deck
+Exec=dailydeck --tray
+Icon=io.github.thnow.dailydeck
+Terminal=false
+Categories=Utility;
+Keywords=Elgato;StreamDeck;Shortcut;Hotkey;Tastenkürzel;
+StartupNotify=false

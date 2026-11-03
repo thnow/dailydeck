@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.thnow.dailydeck</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Daily Deck</name>
+  <summary>Show the keyboard shortcuts of the focused window on a Stream Deck</summary>
+  <summary xml:lang="de">Tastenkürzel des aktiven Fensters auf dem Stream Deck</summary>
+  <description>
+    <p>
+      Daily Deck turns an Elgato Stream Deck into a context sensitive shortcut pad: whenever
+      another application gets the focus, the deck switches to that application's profile and
+      shows its shortcuts. Pressing a key sends the shortcut, translated for the active keyboard
+      layout.
+    </p>
+    <ul>
+      <li>Application icon across the whole deck</li>
+      <li>Profile editor with live preview on the device and shortcut recording</li>
+      <li>Exchangeable profile files</li>
+      <li>Tray icon with pause, pinned profile, brightness and autostart</li>
+    </ul>
+    <p>Not affiliated with Elgato or Corsair.</p>
+  </description>
+  <launchable type="desktop-id">io.github.thnow.dailydeck.desktop</launchable>
+  <provides>
+    <binary>dailydeck</binary>
+    <!-- Elgato Stream Deck (all models): lets software centers suggest this app -->
+    <modalias>usb:v0FD9p*</modalias>
+  </provides>
+  <categories>
+    <category>Utility</category>
+  </categories>
+  <url type="homepage">https://github.com/thnow/dailydeck</url>
+  <url type="bugtracker">https://github.com/thnow/dailydeck/issues</url>
+  <url type="vcs-browser">https://github.com/thnow/dailydeck</url>
+  <developer id="io.github.thnow">
+    <name>Thomas Wittmann</name>
+  </developer>
+  <releases>
+    <release version="0.1.0" date="2026-11-03"/>
+  </releases>
+  <content_rating type="oars-1.1"/>
+</component>

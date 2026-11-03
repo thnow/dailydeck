@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+
+# apply the device permissions to already connected devices
+if [ "$1" = "configure" ] && command -v udevadm >/dev/null 2>&1; then
+    udevadm control --reload-rules 2>/dev/null || true
+    udevadm trigger --subsystem-match=usb --attr-match=idVendor=0fd9 2>/dev/null || true
+    udevadm trigger --subsystem-match=hidraw 2>/dev/null || true
+    udevadm trigger --subsystem-match=misc --sysname-match=uinput 2>/dev/null || true
+fi
+
+#DEBHELPER#

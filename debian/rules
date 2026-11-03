@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+
+export PYBUILD_NAME = dailydeck
+export PYBUILD_TEST_PYTEST = 1
+export PYBUILD_BEFORE_TEST = cp -r {dir}/tests {build_dir}
+export PYBUILD_AFTER_TEST = rm -rf {build_dir}/tests
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+# All runtime dependencies are listed explicitly in debian/control; PyPI names
+# (streamdeck, PySide6-Essentials) do not map to Debian package names.
+override_dh_python3:
+	dh_python3 --no-guessing-deps
