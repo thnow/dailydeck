@@ -155,4 +155,4 @@ tests/              pytest
 
 Gerät, Rendering, Konfiguration, Editor und Leistensymbol sind plattformunabhängig. Pro Plattform
 gibt es ein Fokus- und ein Tasten-Backend (beide als Entwurf vorhanden). Wie daraus Installer
-werden, steht in [docs/RELEASING.md](docs/RELEASING.md).
+werden, steht in [docs/RELEASING.md](docs/RELEASING.md); Stand des macOS-Ports: [docs/MACOS.md](docs/MACOS.md).
