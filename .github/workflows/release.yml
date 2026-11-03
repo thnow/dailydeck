@@ -69,4 +69,4 @@ jobs:
           prerelease=""
           case "$GITHUB_REF_NAME" in *-*|*~*) prerelease="--prerelease" ;; esac
           gh release create "$GITHUB_REF_NAME" artifacts/* \
-            --title "dailydeck ${GITHUB_REF_NAME#v}" --notes-file notes.md $prerelease
+            --title "Daily Deck ${GITHUB_REF_NAME#v}" --notes-file notes.md $prerelease
