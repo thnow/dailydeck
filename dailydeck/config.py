@@ -1,4 +1,5 @@
 import fnmatch
+import hashlib
 import os
 import re
 import shutil
@@ -99,12 +100,33 @@ def config_dir() -> Path:
     return Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "dailydeck"
 
 
+# SHA-256 (with \n line ends) of bundled default configs of earlier releases. A user config
+# that is still such an untouched copy is replaced by the current default, so new profiles
+# arrive on every machine; edited configs are never touched.
+PREVIOUS_DEFAULTS = {
+    "c19dadc531305b2557a9fb0f4071ffda5a65c5d58c88be2677337bedf0d425c7",  # 0.1.0
+}
+
+
+def _content_hash(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
 def default_config_path() -> Path:
-    """The user's config file; created from the bundled default on first use."""
+    """The user's config file; created from (or updated to) the bundled default."""
     user = config_dir() / "config.toml"
+    bundled = DATA_DIR / "default_config.toml"
     if not user.exists():
         user.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(DATA_DIR / "default_config.toml", user)
+        shutil.copyfile(bundled, user)
+    else:
+        try:
+            outdated = _content_hash(user) in PREVIOUS_DEFAULTS
+        except OSError:
+            outdated = False
+        if outdated:
+            shutil.copy2(user, user.with_name(user.name + ".bak"))
+            shutil.copyfile(bundled, user)
     return user
 
 
@@ -184,11 +206,38 @@ def load_profile(data: dict, index: int, base_dir: Path) -> Profile:
     )
 
 
+# per-system variants of a button's "keys"; a button without one uses "keys"
+PLATFORMS = {"macos": "darwin", "windows": "win32", "linux": "linux"}
+PLATFORM_LABELS = {"macos": "macOS", "windows": "Windows", "linux": "Linux"}
+KEY_FIELDS = ("keys", *(f"keys_{p}" for p in PLATFORMS))
+
+
+def current_platform() -> str:
+    """This system as used in ``keys_<platform>``: "macos", "windows" or "linux"."""
+    return {"darwin": "macos", "win32": "windows"}.get(sys.platform, "linux")
+
+
+def button_chords(data: dict, platform: str | None = None) -> tuple[Chord, ...]:
+    """Chords a button sends on ``platform``; every variant is validated, wherever it applies."""
+    platform = platform or current_platform()
+    chosen: tuple[Chord, ...] = ()
+    if keys := data.get("keys"):
+        chosen = parse_shortcut(keys, PLATFORMS[platform])
+    for name, sys_name in PLATFORMS.items():
+        if variant := data.get(f"keys_{name}"):
+            try:
+                chords = parse_shortcut(variant, sys_name)
+            except ShortcutError as e:
+                raise ShortcutError(f"keys_{name}: {e}") from e
+            if name == platform:
+                chosen = chords
+    return chosen
+
+
 def load_button(data: dict, base_dir: Path) -> Button:
-    keys = data.get("keys")
     return Button(
         label=data.get("label", ""),
-        chords=parse_shortcut(keys) if keys else (),
+        chords=button_chords(data),
         color=data.get("color"),
         text_color=data.get("text_color"),
         icon=_resolve(base_dir, data.get("icon")),

@@ -5,6 +5,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach
 
 ## [Unreleased]
 
+### Neu
+- macOS: läuft am Mac (getestet mit Stream Deck MK.2, macOS 27, Apple Silicon). Tastendrücke per
+  Quartz passend zum Tastaturlayout, inklusive der von macOS angepassten Menükürzel
+  (deutsches Layout: ⌘[ → ⌘Ö); Hinweis, wenn die Freigabe unter Bedienungshilfen fehlt.
+- Modifier `primary` (⌘ auf dem Mac, sonst Strg) und pro Taste `keys_macos`, `keys_windows`,
+  `keys_linux` – ein Profil für alle Systeme. Der Editor nimmt Strg/⌘ als `primary` auf und hat
+  Felder für die Varianten.
+- Standardprofile auf `primary` umgestellt, mit Mac-Kürzeln; neu: Safari, iTerm2 im Terminal-Profil.
+- Eine unveränderte Konfiguration aus einer früheren Version wird beim Start durch die neue
+  Standardkonfiguration ersetzt (alte Fassung als `config.toml.bak`); bearbeitete bleiben, wie sie sind.
+
+### Behoben
+- macOS: aktives Programm wurde ohne Leistensymbol (`-v`, `--print-focus`) nicht aktualisiert.
+- macOS: ⌘ allein wurde im Editor als `super+ctrl` aufgenommen.
+
 ## [0.1.0] – 2026-11-03
 
 Erste Version.

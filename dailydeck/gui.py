@@ -44,9 +44,21 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from .config import Button, ConfigError, Profile, default_config_path, load_button, parse_settings, read_config_data
+from .config import (
+    KEY_FIELDS,
+    PLATFORM_LABELS,
+    Button,
+    ConfigError,
+    Profile,
+    button_chords,
+    current_platform,
+    default_config_path,
+    load_button,
+    parse_settings,
+    read_config_data,
+)
 from .fonts import font_spec, list_fonts, split_spec
-from .keys import ShortcutError, parse_shortcut
+from .keys import ShortcutError
 from .layout import NavSlot, backdrop_tiles, icon_for, page_count, page_slots, per_page, render_slot
 from .preview import clear_request, make_payload, read_ack, request_from_payload, send_request
 from .profile_io import PROFILE_SUFFIX, clean_profile, export_profile, import_profile, save_config
@@ -86,20 +98,23 @@ QT_KEY_NAMES = {
     _k("Key_MediaNext"): "nexttrack", _k("Key_MediaPrevious"): "prevtrack",
     **{_k(f"Key_F{i}"): f"f{i}" for i in range(1, 25)},
 }
+# Qt reports Cmd as Control and Ctrl as Meta on macOS. Control/Cmd is the platform's
+# primary modifier, recorded as "primary" so the shortcut also works on the other systems.
+_META = "ctrl" if sys.platform == "darwin" else "super"
 QT_MODIFIER_KEYS = {
-    _k("Key_Control"): "ctrl", _k("Key_Shift"): "shift", _k("Key_Alt"): "alt",
-    _k("Key_AltGr"): "altgr", _k("Key_Meta"): "super", _k("Key_Super_L"): "super",
+    _k("Key_Control"): "primary", _k("Key_Shift"): "shift", _k("Key_Alt"): "alt",
+    _k("Key_AltGr"): "altgr", _k("Key_Meta"): _META, _k("Key_Super_L"): "super",
     _k("Key_Super_R"): "super",
 }
 CHAR_NAMES = {"+": "plus", "-": "minus", " ": "space"}
+KEYS_PLACEHOLDER = "z. B. primary+shift+t (primary = Strg, auf dem Mac ⌘)"
 
 
 def _modifier_names(mods) -> list[str]:
     KM = Qt.KeyboardModifier
-    ctrl, meta = ("super", "ctrl") if sys.platform == "darwin" else ("ctrl", "super")  # Qt swaps them on macOS
     names = []
     if mods & KM.ControlModifier:
-        names.append(ctrl)
+        names.append("primary")
     if mods & KM.AltModifier:
         names.append("alt")
     if mods & KM.GroupSwitchModifier:
@@ -107,7 +122,7 @@ def _modifier_names(mods) -> list[str]:
     if mods & KM.ShiftModifier:
         names.append("shift")
     if mods & KM.MetaModifier:
-        names.append(meta)
+        names.append(_META)
     return names
 
 
@@ -161,7 +176,7 @@ class ShortcutEdit(QLineEdit):
         self._recording = False
         self._idle.stop()
         self.releaseKeyboard()
-        self.setPlaceholderText("z. B. ctrl+shift+t")
+        self.setPlaceholderText(KEYS_PLACEHOLDER)
         self.recordingChanged.emit(False)
         self.editingFinished.emit()
 
@@ -755,16 +770,17 @@ class MainWindow(QMainWindow):
         self.label_edit.setToolTip("Mit | markierst du, wo ein langes Wort getrennt werden darf, z. B. Seiten|leiste")
         self.label_edit.textEdited.connect(self._button_changed)
         bf.addRow("Beschriftung", self.label_edit)
-        keys_row = QHBoxLayout()
-        self.keys_edit = ShortcutEdit()
-        self.keys_edit.setPlaceholderText("z. B. ctrl+shift+t")
-        self.keys_edit.textChanged.connect(self._button_changed)
-        self.record_button = QPushButton("⏺ Aufnehmen", clicked=self._toggle_record)
-        self.keys_edit.recordingChanged.connect(
-            lambda on: self.record_button.setText("■ Fertig" if on else "⏺ Aufnehmen"))
-        keys_row.addWidget(self.keys_edit, 1)
-        keys_row.addWidget(self.record_button)
+        self.keys_edit, keys_row = self._shortcut_row(KEYS_PLACEHOLDER)
         bf.addRow("Kürzel", keys_row)
+        # per-system variants, for shortcuts that differ by more than Ctrl/Cmd
+        self.variant_edits: dict[str, ShortcutEdit] = {}
+        here = current_platform()
+        for name, label in PLATFORM_LABELS.items():
+            edit, row = self._shortcut_row("wie oben", compact=True)
+            edit.setToolTip(f"Nur auf {label} statt des Kürzels oben senden, z. B. wenn das Programm "
+                            "dort eine ganz andere Taste nutzt")
+            self.variant_edits[name] = edit
+            bf.addRow(f"  {label}" + (" (hier)" if name == here else ""), row)
         self.keys_error = QLabel()
         self.keys_error.setStyleSheet("color: #e53935;")
         bf.addRow("", self.keys_error)
@@ -1232,10 +1248,10 @@ class MainWindow(QMainWindow):
         profile = clean_profile(copy.deepcopy(self.current_profile() or {"name": ""}))
         for button in profile.get("buttons", []):  # invalid shortcuts must not block the preview
             try:
-                if button.get("keys"):
-                    parse_shortcut(button["keys"])
+                button_chords(button)
             except ShortcutError:
-                del button["keys"]
+                for field in KEY_FIELDS:
+                    button.pop(field, None)
         if profile.get("title"):
             del profile["title"]
         ids = [m for m in profile.get("match", []) if not any(c in m for c in "*?[")]
@@ -1319,6 +1335,9 @@ class MainWindow(QMainWindow):
         self.keys_edit.stop_recording()
         self.label_edit.setText(b.get("label", "").replace(SOFT_HYPHEN, "|"))
         self.keys_edit.setText(b.get("keys", ""))
+        for name, edit in self.variant_edits.items():
+            edit.stop_recording()
+            edit.setText(b.get(f"keys_{name}", ""))
         self.button_color.set_color(b.get("color"))
         self.button_text_color.set_color(b.get("text_color"))
         self.button_icon.set_path(b.get("icon"))
@@ -1333,7 +1352,7 @@ class MainWindow(QMainWindow):
         if button is None:
             return
         button["label"] = self.label_edit.text().replace("|", SOFT_HYPHEN)
-        button["keys"] = self.keys_edit.text().strip()
+        button.update(self._key_fields())
         button["color"] = self.button_color.color()
         button["text_color"] = self.button_text_color.color()
         button["icon"] = self.button_icon.path()
@@ -1345,21 +1364,33 @@ class MainWindow(QMainWindow):
         self._render_timer.start()
 
     def _validate_keys(self) -> None:
-        text = self.keys_edit.text().strip()
-        if not text or self.keys_edit.recording:
+        edits = [self.keys_edit, *self.variant_edits.values()]
+        if any(e.recording for e in edits):
             self.keys_error.setText("")
             return
         try:
-            parse_shortcut(text)
+            button_chords(self._key_fields())
             self.keys_error.setText("")
         except ShortcutError as e:
             self.keys_error.setText(str(e))
 
-    def _toggle_record(self) -> None:
-        if self.keys_edit.recording:
-            self.keys_edit.stop_recording()
-        else:
-            self.keys_edit.start_recording()
+    def _key_fields(self) -> dict:
+        fields = {"keys": self.keys_edit.text().strip()}
+        fields.update({f"keys_{n}": e.text().strip() for n, e in self.variant_edits.items()})
+        return fields
+
+    def _shortcut_row(self, placeholder: str, compact: bool = False):
+        edit = ShortcutEdit()
+        edit.setPlaceholderText(placeholder)
+        edit.textChanged.connect(self._button_changed)
+        idle = "⏺" if compact else "⏺ Aufnehmen"
+        button = QPushButton(idle, clicked=lambda: edit.stop_recording() if edit.recording else edit.start_recording())
+        button.setToolTip("Tastenkombination aufnehmen")
+        edit.recordingChanged.connect(lambda on: button.setText(("■" if compact else "■ Fertig") if on else idle))
+        row = QHBoxLayout()
+        row.addWidget(edit, 1)
+        row.addWidget(button)
+        return edit, row
 
 
 def main(config_path: Path | None = None) -> int:
