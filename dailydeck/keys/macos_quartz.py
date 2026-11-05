@@ -20,9 +20,24 @@ from Foundation import NSOperationQueue
 
 from .base import KeySender
 from .parse import Chord
-from .pynput_sender import ACCESSIBILITY_HINT, accessibility_trusted
 
 log = logging.getLogger(__name__)
+
+ACCESSIBILITY_HINT = (
+    "Daily Deck darf keine Tastendrücke senden. Freigabe erteilen unter Systemeinstellungen → "
+    "Datenschutz & Sicherheit → Bedienungshilfen (für die App bzw. das Terminal, aus dem sie läuft)."
+)
+
+
+def accessibility_trusted(prompt: bool = False) -> bool:
+    """Whether macOS lets this process send key events.
+
+    With ``prompt`` macOS shows its dialog that leads to the settings pane.
+    """
+    from ApplicationServices import AXIsProcessTrustedWithOptions, kAXTrustedCheckOptionPrompt
+
+    return bool(AXIsProcessTrustedWithOptions({kAXTrustedCheckOptionPrompt: prompt}))
+
 
 KEY_DELAY = 0.012
 

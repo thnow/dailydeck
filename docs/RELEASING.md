@@ -10,7 +10,7 @@
                  ┌──────────────────────────── Release (Tag v*) ─────────────────────────────────────────┐
   git tag v1.2.3 │ Tag = Version? ─▶ sdist/wheel ─┐                                                       │
   git push --tags│                ─▶ .deb ────────┼─▶ SHA256SUMS ─▶ GitHub Release (Notizen aus CHANGELOG)│
-                 │   (später)     ─▶ .exe / .dmg ─┘                                                       │
+                 │                ─▶ .dmg ────────┤  (später .exe)                                       │
                  └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -85,7 +85,7 @@ Ein `.deb` aus dem GitHub-Release muss man bei jeder Version neu herunterladen. 
 | Arch | – | `PKGBUILD` im AUR | – | – | geplant |
 | Universell Linux | – | `pipx install dailydeck` (PyPI) | wheel | – | sdist/wheel werden schon gebaut |
 | Windows 10/11 | `windows-latest` | PyInstaller (onedir) + Inno Setup | `.exe`-Installer | Authenticode (z. B. Azure Trusted Signing) | Backends vorbereitet, ungetestet |
-| macOS 13+ | `macos-14` (arm64), `macos-13` (x86_64) | PyInstaller `.app` + `create-dmg` | `.dmg` | Developer ID + Notarisierung | Backends vorbereitet, ungetestet |
+| macOS 12+ | `macos-15` (arm64) | PyInstaller `.app` + `hdiutil` | `.dmg` | Developer ID + Notarisierung | **fertig** (Apple Silicon), Intel offen |
 
 **Warum kein Flatpak/Snap?** Die App braucht `/dev/uinput` und den USB-Zugriff (udev-Regeln
 lassen sich aus einer Sandbox nicht installieren), eine GNOME-Shell-Erweiterung und den Blick auf
@@ -119,13 +119,13 @@ gibt es `dailydeck --print-focus`.
 
 ### macOS
 
-- **Bauen:** PyInstaller-`.app` mit `libhidapi.dylib` (Homebrew) im Bundle; je ein Build für
-  Apple Silicon und Intel (oder universal2).
-- **Rechte:** Bedienungshilfen (Tastendrücke senden) – die App sollte beim ersten Start darauf
-  hinweisen. Standardprofile brauchen `cmd` statt `ctrl`.
-- **Signieren/Notarisieren:** Apple-Developer-Konto; `codesign` + `notarytool` im Job,
-  Zugangsdaten als Secrets. Ohne Notarisierung blockiert Gatekeeper den Start.
-- **Später:** Homebrew-Cask.
+- **Bauen:** `scripts/build-macos.sh` (lokal und im Release-Job gleich), Details und Fallstricke
+  in `docs/MACOS.md`. CI baut bei jedem Push unsigniert und prüft dabei die Mindestversion.
+- **Signieren/Notarisieren:** Der Release-Job legt einen temporären Schlüsselbund aus den Secrets
+  `MACOS_CERTIFICATE_P12`/`MACOS_CERTIFICATE_PASSWORD` an und notarisiert mit dem
+  App-Store-Connect-Schlüssel (`MACOS_NOTARY_KEY_P8`, `MACOS_NOTARY_KEY_ID`, `MACOS_NOTARY_ISSUER`).
+- **Rechte:** Bedienungshilfen (Tastendrücke senden); die App fragt beim ersten Start.
+- **Später:** Intel-Build, Homebrew-Cask.
 
 ## Vor dem ersten öffentlichen Release klären
 

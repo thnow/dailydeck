@@ -28,6 +28,14 @@ Danach im Startmenü **„Daily Deck“** starten (Symbol in der oberen Leiste).
 ersten Start richtet die App die GNOME-Erweiterung zur Fenstererkennung ein; unter Wayland wirkt
 sie nach **einmal Ab- und Anmelden**. Den Autostart schaltet man im Leistenmenü ein.
 
+## Installation (macOS)
+
+`DailyDeck-<version>-macos-arm64.dmg` aus den [Releases](https://github.com/thnow/dailydeck/releases)
+laden (Apple Silicon, ab macOS 12), öffnen und **Daily Deck** nach *Programme* ziehen. Beim ersten
+Start fragt macOS nach der Freigabe unter Systemeinstellungen → Datenschutz & Sicherheit →
+**Bedienungshilfen** – ohne sie kann die App keine Tastendrücke senden. Die Elgato-Software darf
+nicht gleichzeitig laufen. Selbst bauen: [docs/MACOS.md](docs/MACOS.md).
+
 Releases, weitere Plattformen und die Build-Pipeline: [docs/RELEASING.md](docs/RELEASING.md).
 
 ### Entwicklung

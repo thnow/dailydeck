@@ -51,3 +51,13 @@ jobs:
           name: deb-${{ strategy.job-index }}
           path: dist/*.deb
           retention-days: 14
+
+  macos:
+    name: macOS app (unsigned)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Tools
+        run: brew install uv
+      - name: Build, check macOS 12 compatibility and smoke-test
+        run: scripts/build-macos.sh

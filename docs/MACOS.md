@@ -1,7 +1,7 @@
 # macOS-Port – Stand und Plan
 
-Läuft am Mac: getestet mit Stream Deck MK.2, macOS 27, Apple Silicon, deutsches Tastaturlayout,
-aus dem Quellbaum (`--tray` und `-v`). Ein Paket (`.app`/DMG) gibt es noch nicht.
+Läuft am Mac: getestet mit Stream Deck MK.2, macOS 27, Apple Silicon, deutsches Tastaturlayout.
+Releases enthalten ein signiertes, notarisiertes DMG für Apple Silicon ab macOS 12.
 
 ## Umgesetzt
 
@@ -10,7 +10,7 @@ aus dem Quellbaum (`--tray` und `-v`). Ein Paket (`.app`/DMG) gibt es noch nicht
 | Aktives Programm | `dailydeck/focus/macos.py` | `NSWorkspace.frontmostApplication()`, Bundle-ID + Name, kein Fenstertitel. Getestet. |
 | Tasten senden | `dailydeck/keys/macos_quartz.py` | Quartz-Events mit echten Tastencodes, Layout über `UCKeyTranslate`. Getestet. |
 | ⌘ / Strg | `dailydeck/keys/parse.py`, `config.py` | `primary` + `keys_macos`/`keys_windows`/`keys_linux` pro Taste |
-| Bedienungshilfen | `dailydeck/keys/pynput_sender.py` | `AXIsProcessTrustedWithOptions` mit Systemdialog, Warnung im Log |
+| Bedienungshilfen | `dailydeck/keys/macos_quartz.py` | `AXIsProcessTrustedWithOptions` mit Systemdialog, Warnung im Log |
 | Programmicon | `dailydeck/appicons.py` (`_find_macos`) | Bundle-ID → `.app` → `.icns` (ungeprüft, ob es bei allen Apps greift) |
 | Schriften | `dailydeck/fonts.py` | Schriftordner scannen |
 | Autostart | `dailydeck/autostart.py` | LaunchAgent – **noch nicht getestet** |
@@ -46,12 +46,39 @@ die `.app`).
    (SIGTRAP), wenn sie außerhalb des Main-Threads laufen, während ein Textfeld den Fokus hat. Der
    Sender reicht die Abfrage deshalb an den Main-Runloop weiter.
 6. Kein Fenstertitel: `title`-Regeln greifen auf dem Mac nicht (bräuchte die AX-API).
+7. **Mindestversion des Pakets:** Jede Binärdatei im Bundle trägt ein `minos`; ist eine davon neuer
+   als das laufende macOS, kann das Programm abstürzen. Homebrew baut für die eigene Maschine
+   (Python, hidapi: macOS 26/27), und PySide6 ab 6.10 baut seine Module für macOS 15 bzw. 26,
+   obwohl die Wheels 13/14 angeben. Deshalb: portables Python 3.13 (uv/python.org, macOS 11),
+   PySide6 6.9.3 (`packaging/macos/constraints.txt`, macOS 12), hidapi aus dem Quelltext. Das
+   Build-Skript prüft am Ende alle Dateien und bricht ab, wenn eine neuer als `MACOS_MIN` ist.
+
+## Paket bauen
+
+```bash
+brew install uv
+scripts/build-macos.sh        # ad-hoc signiert, nur für diesen Mac
+SIGN_IDENTITY=<SHA-1 des Zertifikats> NOTARY_PROFILE=dailydeck scripts/build-macos.sh
+```
+
+Ergebnis: `dist/Daily Deck.app` und `dist/DailyDeck-<version>-macos-arm64.dmg`. Logs der App:
+`~/Library/Logs/Daily Deck.log`.
+
+Einmalig für Signatur und Notarisierung:
+
+- **Developer ID Application**-Zertifikat. Xcode legte es nicht an („can only be performed by the
+  account holder“, obwohl Inhaber); geklappt hat: Schlüssel + CSR per `openssl`, im Portal unter
+  Certificates → Developer ID Application hochladen, `.cer` installieren. Fehlt danach die
+  „valid identity“, das Zwischenzertifikat *Developer ID G2 CA* von apple.com/certificateauthority
+  installieren.
+- **Notarisierung** per App-Store-Connect-API-Schlüssel (Benutzer und Zugriff → Integrationen,
+  Rolle Developer); `xcrun notarytool store-credentials dailydeck --key … --key-id … --issuer …`.
+  Ein app-spezifisches Passwort brachte nur 401.
+- **CI:** Secrets `MACOS_CERTIFICATE_P12` (Base64), `MACOS_CERTIFICATE_PASSWORD`,
+  `MACOS_NOTARY_KEY_P8` (Base64), `MACOS_NOTARY_KEY_ID`, `MACOS_NOTARY_ISSUER`.
 
 ## Offen
 
 - Autostart (LaunchAgent) und Programmicons über viele Apps hinweg testen.
 - Windows-Seite der neuen Profile (`keys_windows`, pynput) am Windows-Rechner prüfen.
-- Paket: PyInstaller-`.app` mit gebündelter `libhidapi.dylib`, DMG, Signatur (Developer ID) und
-  Notarisierung; CI-Jobs auf `macos-14` (arm64) und `macos-13` (x86_64), siehe
-  `docs/RELEASING.md`. Dafür im Schlüsselbund ein „Developer ID Application“-Zertifikat anlegen
-  (Xcode → Settings → Accounts → Manage Certificates); bisher ist keins installiert.
+- Intel-Macs: eigener Build auf einem x86_64-Runner (oder universal2) – bisher nur Apple Silicon.

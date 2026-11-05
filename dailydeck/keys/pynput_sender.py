@@ -1,8 +1,4 @@
-"""Windows / macOS / X11 backend using ``pynput``.
-
-On macOS the process needs the Accessibility permission; without it the
-system drops synthetic key events silently, so it is checked explicitly.
-"""
+"""Windows backend using ``pynput`` (macOS uses ``macos_quartz``, Linux ``uinput``)."""
 
 import logging
 import sys
@@ -40,35 +36,13 @@ KEY_DELAY = 0.012
 
 log = logging.getLogger(__name__)
 
-ACCESSIBILITY_HINT = (
-    "Daily Deck darf keine Tastendrücke senden. Freigabe erteilen unter Systemeinstellungen → "
-    "Datenschutz & Sicherheit → Bedienungshilfen (für die App bzw. das Terminal, aus dem sie läuft)."
-)
-
-
-def accessibility_trusted(prompt: bool = False) -> bool:
-    """Whether macOS lets this process send key events (always True elsewhere).
-
-    With ``prompt`` macOS shows its dialog that leads to the settings pane.
-    """
-    if sys.platform != "darwin":
-        return True
-    from ApplicationServices import AXIsProcessTrustedWithOptions, kAXTrustedCheckOptionPrompt
-
-    return bool(AXIsProcessTrustedWithOptions({kAXTrustedCheckOptionPrompt: prompt}))
-
-
 class PynputKeySender(KeySender):
     name = "pynput"
 
     def __init__(self):
         self._kb = Controller()
-        self._trusted = accessibility_trusted(prompt=True)
-        if not self._trusted:
-            log.warning(ACCESSIBILITY_HINT)
 
     def resolve(self, chord: Chord) -> list:
-        # "cmd" is the natural primary modifier on macOS, "super" elsewhere
         keys = [MODIFIER_KEYS[m] for m in ("ctrl", "alt", "altgr", "shift", "super") if m in chord.modifiers]
         if not chord.key:
             pass
@@ -81,12 +55,6 @@ class PynputKeySender(KeySender):
         return keys
 
     def send(self, chords: tuple[Chord, ...]) -> None:
-        if not self._trusted:
-            # the permission can be granted while running; re-check without prompting again
-            self._trusted = accessibility_trusted()
-            if not self._trusted:
-                log.warning(ACCESSIBILITY_HINT)
-                return
         for chord in chords:
             keys = self.resolve(chord)
             for k in keys:

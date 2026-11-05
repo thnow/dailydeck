@@ -15,7 +15,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach
 - Standardprofile auf `primary` umgestellt, mit Mac-Kürzeln; neu: Safari, iTerm2 im Terminal-Profil.
 - Eine unveränderte Konfiguration aus einer früheren Version wird beim Start durch die neue
   Standardkonfiguration ersetzt (alte Fassung als `config.toml.bak`); bearbeitete bleiben, wie sie sind.
-- macOS: Paketbau als signiertes, notarisiertes `Daily Deck.app`/DMG (`scripts/build-macos.sh`).
+- macOS: signiertes, notarisiertes DMG für Apple Silicon ab macOS 12, gebaut im Release-Workflow
+  (`scripts/build-macos.sh`).
 - Editor: Deck-Vorschau kompakter (fester Abstand statt des Geräte-Tastenabstands); Einstellungen
   in „Tasten“ und „Programmicon“ gruppiert, Icon-Optionen nur aktiv, wenn das Icon eingeblendet wird.
 

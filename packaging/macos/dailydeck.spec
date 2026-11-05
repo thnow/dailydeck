@@ -1,5 +1,5 @@
 # PyInstaller spec for "Daily Deck.app"; run through scripts/build-macos.sh,
-# which sets DAILYDECK_VERSION, DAILYDECK_HIDAPI and DAILYDECK_ICNS.
+# which sets DAILYDECK_VERSION, DAILYDECK_HIDAPI, DAILYDECK_ICNS and DAILYDECK_MACOS_MIN.
 import os
 
 from PyInstaller.utils.hooks import collect_data_files
@@ -37,6 +37,7 @@ app = BUNDLE(  # noqa: F821
         "CFBundleDisplayName": "Daily Deck",
         "CFBundleShortVersionString": version,
         "CFBundleVersion": version,
+        "LSMinimumSystemVersion": os.environ["DAILYDECK_MACOS_MIN"],
         "LSUIElement": True,  # menu bar app: no Dock icon
         "LSApplicationCategoryType": "public.app-category.productivity",
         "NSHighResolutionCapable": True,
