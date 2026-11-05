@@ -5,6 +5,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach
 
 ## [Unreleased]
 
+## [0.2.0] – 2026-11-05
+
 ### Neu
 - macOS: läuft am Mac (getestet mit Stream Deck MK.2, macOS 27, Apple Silicon). Tastendrücke per
   Quartz passend zum Tastaturlayout, inklusive der von macOS angepassten Menükürzel
