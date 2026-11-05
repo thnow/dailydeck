@@ -36,6 +36,8 @@ from PySide6.QtWidgets import (
     QMenu,
     QMessageBox,
     QPushButton,
+    QScrollArea,
+    QSizePolicy,
     QSlider,
     QSpinBox,
     QSplitter,
@@ -44,12 +46,25 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from .config import Button, ConfigError, Profile, default_config_path, load_button, parse_settings, read_config_data
+from .config import (
+    KEY_FIELDS,
+    PLATFORM_LABELS,
+    Button,
+    ConfigError,
+    Profile,
+    button_chords,
+    current_platform,
+    default_config_path,
+    load_button,
+    parse_settings,
+    read_config_data,
+)
 from .fonts import font_spec, list_fonts, split_spec
-from .keys import ShortcutError, parse_shortcut
+from .keys import ShortcutError
 from .layout import NavSlot, backdrop_tiles, icon_for, page_count, page_slots, per_page, render_slot
 from .preview import clear_request, make_payload, read_ack, request_from_payload, send_request
 from .profile_io import PROFILE_SUFFIX, clean_profile, export_profile, import_profile, save_config
+from .render import default_font_name
 
 COLS, ROWS = 5, 3
 KEY_COUNT = COLS * ROWS
@@ -86,20 +101,23 @@ QT_KEY_NAMES = {
     _k("Key_MediaNext"): "nexttrack", _k("Key_MediaPrevious"): "prevtrack",
     **{_k(f"Key_F{i}"): f"f{i}" for i in range(1, 25)},
 }
+# Qt reports Cmd as Control and Ctrl as Meta on macOS. Control/Cmd is the platform's
+# primary modifier, recorded as "primary" so the shortcut also works on the other systems.
+_META = "ctrl" if sys.platform == "darwin" else "super"
 QT_MODIFIER_KEYS = {
-    _k("Key_Control"): "ctrl", _k("Key_Shift"): "shift", _k("Key_Alt"): "alt",
-    _k("Key_AltGr"): "altgr", _k("Key_Meta"): "super", _k("Key_Super_L"): "super",
+    _k("Key_Control"): "primary", _k("Key_Shift"): "shift", _k("Key_Alt"): "alt",
+    _k("Key_AltGr"): "altgr", _k("Key_Meta"): _META, _k("Key_Super_L"): "super",
     _k("Key_Super_R"): "super",
 }
 CHAR_NAMES = {"+": "plus", "-": "minus", " ": "space"}
+KEYS_PLACEHOLDER = "z. B. primary+shift+t (primary = Strg, auf dem Mac ⌘)"
 
 
 def _modifier_names(mods) -> list[str]:
     KM = Qt.KeyboardModifier
-    ctrl, meta = ("super", "ctrl") if sys.platform == "darwin" else ("ctrl", "super")  # Qt swaps them on macOS
     names = []
     if mods & KM.ControlModifier:
-        names.append(ctrl)
+        names.append("primary")
     if mods & KM.AltModifier:
         names.append("alt")
     if mods & KM.GroupSwitchModifier:
@@ -107,7 +125,7 @@ def _modifier_names(mods) -> list[str]:
     if mods & KM.ShiftModifier:
         names.append("shift")
     if mods & KM.MetaModifier:
-        names.append(meta)
+        names.append(_META)
     return names
 
 
@@ -127,6 +145,21 @@ def chord_from_event(event) -> str | None:
     else:
         return None
     return "+".join(mods + [name])
+
+
+def _form(parent: QWidget) -> QFormLayout:
+    """A form whose fields use the free width (macOS keeps them at their size hint)."""
+    form = QFormLayout(parent)
+    form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+    form.setVerticalSpacing(10)  # even rows; the style spaces rows with buttons further apart
+    return form
+
+
+def _compact(widget: QWidget) -> QWidget:
+    """Keeps a spin box at its natural width inside a growing form."""
+    widget.setSizePolicy(QSizePolicy.Policy.Fixed, widget.sizePolicy().verticalPolicy())
+    widget.setMinimumWidth(110)
+    return widget
 
 
 class ShortcutEdit(QLineEdit):
@@ -161,7 +194,7 @@ class ShortcutEdit(QLineEdit):
         self._recording = False
         self._idle.stop()
         self.releaseKeyboard()
-        self.setPlaceholderText("z. B. ctrl+shift+t")
+        self.setPlaceholderText(KEYS_PLACEHOLDER)
         self.recordingChanged.emit(False)
         self.editingFinished.emit()
 
@@ -524,31 +557,44 @@ class SettingsDialog(QDialog):
         defaults = parse_settings({})
         get = lambda key: settings.get(key, getattr(defaults, key))  # noqa: E731
 
-        form = QFormLayout(self)
-        self.font = FontCombo("Standard (DejaVu Sans Bold)")
+        layout = QVBoxLayout(self)
+
+        keys = QGroupBox("Tasten")
+        form = _form(keys)
+        self.font = FontCombo(f"Standard ({default_font_name()})")
         self.font.set_spec(settings.get("font"))
         self.font.setMinimumWidth(320)
         form.addRow("Schriftart", self.font)
         self.brightness = self._slider(int(get("brightness")))
         form.addRow("Helligkeit Deck", self.brightness)
         self.show_keys = QCheckBox("Kürzel unter der Beschriftung anzeigen", checked=bool(get("show_keys")))
-        form.addRow(self.show_keys)
-        self.app_icon = QCheckBox("Programmicon über alle Tasten einblenden", checked=bool(get("app_icon")))
-        form.addRow(self.app_icon)
+        form.addRow("", self.show_keys)
+        layout.addWidget(keys)
+
+        icon = QGroupBox("Programmicon")
+        form = _form(icon)
+        self.app_icon = QCheckBox("Icon des Programms über alle Tasten einblenden", checked=bool(get("app_icon")))
+        form.addRow("", self.app_icon)
         self.icon_brightness = self._slider(round(get("app_icon_brightness") * 100))
-        form.addRow("Helligkeit Programmicon", self.icon_brightness)
+        form.addRow("Helligkeit Icon", self.icon_brightness)
         self.opacity = self._slider(round(get("button_opacity") * 100))
+        self.opacity.setToolTip("Wie stark die Tastenfarbe das Icon überdeckt")
         form.addRow("Deckkraft der Tasten", self.opacity)
         self.flash = QDoubleSpinBox(minimum=0, maximum=5, singleStep=0.1, suffix=" s",
                                     value=float(get("app_icon_flash")))
-        form.addRow("Icon aufblitzen beim Wechsel", self.flash)
+        self.flash.setToolTip("So lange leuchtet das Icon nach einem Programmwechsel in voller Helligkeit; 0 = aus")
+        form.addRow("Aufblitzen beim Wechsel", _compact(self.flash))
         self.spacing = QSpinBox(minimum=0, maximum=100, suffix=" px", value=int(get("key_spacing")))
-        self.spacing.setToolTip("Abstand zwischen den Tasten, damit das Icon durchgehend wirkt")
-        form.addRow("Tastenabstand", self.spacing)
+        self.spacing.setToolTip("Abstand zwischen den Tasten am Gerät, damit das Icon durchgehend wirkt")
+        form.addRow("Tastenabstand am Gerät", _compact(self.spacing))
+        layout.addWidget(icon)
+        self.app_icon.toggled.connect(self._icon_rows_enabled)
+        self._icon_rows_enabled(self.app_icon.isChecked())
+
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
-        form.addRow(buttons)
+        layout.addWidget(buttons)
 
         self.font.changed.connect(self._changed)
         for box in (self.brightness, self.icon_brightness, self.opacity):
@@ -557,6 +603,10 @@ class SettingsDialog(QDialog):
             check.toggled.connect(self._changed)
         self.flash.valueChanged.connect(self._changed)
         self.spacing.valueChanged.connect(self._changed)
+
+    def _icon_rows_enabled(self, on: bool) -> None:
+        for widget in (self.icon_brightness, self.opacity, self.flash, self.spacing):
+            widget.setEnabled(on)
 
     def _changed(self, *_) -> None:
         self.apply(self._settings)
@@ -660,13 +710,19 @@ class MainWindow(QMainWindow):
 
         right = QWidget()
         rv = QVBoxLayout(right)
-        splitter.addWidget(right)
+        # scrolls on small screens (e.g. a 13" notebook) instead of running off the bottom
+        scroll = QScrollArea()
+        scroll.setWidget(right)
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        splitter.addWidget(scroll)
         splitter.setStretchFactor(1, 1)
         splitter.setSizes([260, 760])
 
         # profile properties
         box = QGroupBox("Profil")
-        form = QFormLayout(box)
+        form = _form(box)
         self.name_edit = QLineEdit()
         self.name_edit.textEdited.connect(self._profile_changed)
         form.addRow("Name", self.name_edit)
@@ -711,6 +767,8 @@ class MainWindow(QMainWindow):
         frame.setStyleSheet("background:#151515; border-radius:10px;")
         grid = QGridLayout(frame)
         grid.setContentsMargins(14, 14, 14, 14)
+        # compact: the tiles' selection margin alone leaves an 8 px gap; the device keeps key_spacing
+        grid.setSpacing(0)
         self.deck_grid = grid
         self.tiles: list[KeyTile] = []
         for i in range(KEY_COUNT):
@@ -750,24 +808,27 @@ class MainWindow(QMainWindow):
 
         # button editor
         self.button_box = QGroupBox("Taste")
-        bf = QFormLayout(self.button_box)
+        bf = _form(self.button_box)
         self.label_edit = QLineEdit(placeholderText="Beschriftung")
         self.label_edit.setToolTip("Mit | markierst du, wo ein langes Wort getrennt werden darf, z. B. Seiten|leiste")
         self.label_edit.textEdited.connect(self._button_changed)
         bf.addRow("Beschriftung", self.label_edit)
-        keys_row = QHBoxLayout()
-        self.keys_edit = ShortcutEdit()
-        self.keys_edit.setPlaceholderText("z. B. ctrl+shift+t")
-        self.keys_edit.textChanged.connect(self._button_changed)
-        self.record_button = QPushButton("⏺ Aufnehmen", clicked=self._toggle_record)
-        self.keys_edit.recordingChanged.connect(
-            lambda on: self.record_button.setText("■ Fertig" if on else "⏺ Aufnehmen"))
-        keys_row.addWidget(self.keys_edit, 1)
-        keys_row.addWidget(self.record_button)
+        self.keys_edit, keys_row = self._shortcut_row(KEYS_PLACEHOLDER)
         bf.addRow("Kürzel", keys_row)
+        # per-system variants, for shortcuts that differ by more than Ctrl/Cmd
+        self.variant_edits: dict[str, ShortcutEdit] = {}
+        here = current_platform()
+        for name, label in PLATFORM_LABELS.items():
+            edit, row = self._shortcut_row("wie oben", compact=True)
+            edit.setToolTip(f"Nur auf {label} statt des Kürzels oben senden, z. B. wenn das Programm "
+                            "dort eine ganz andere Taste nutzt")
+            self.variant_edits[name] = edit
+            bf.addRow(f"  {label}" + (" (hier)" if name == here else ""), row)
         self.keys_error = QLabel()
         self.keys_error.setStyleSheet("color: #e53935;")
         bf.addRow("", self.keys_error)
+        bf.setRowVisible(self.keys_error, False)  # only takes room when there is an error
+        self._button_form = bf
         colors = QHBoxLayout()
         self.button_color = ColorButton("vom Profil")
         self.button_color.changed.connect(self._button_changed)
@@ -784,6 +845,7 @@ class MainWindow(QMainWindow):
         bf.addRow("Symbol", self.button_icon)
         size_row = QHBoxLayout()
         self.font_size = QSpinBox(minimum=0, maximum=40, specialValueText="automatisch")
+        _compact(self.font_size).setMinimumWidth(130)  # room for "automatisch"
         self.font_size.valueChanged.connect(self._button_changed)
         size_row.addWidget(self.font_size)
         size_row.addStretch()
@@ -793,7 +855,12 @@ class MainWindow(QMainWindow):
         rv.addStretch()
 
         self.statusBar()
-        self.resize(1080, 900)
+        width, height = 1080, 900
+        screen = QApplication.primaryScreen()
+        if screen is not None:
+            free = screen.availableGeometry()
+            width, height = min(width, free.width() - 40), min(height, free.height() - 40)
+        self.resize(width, height)
 
     def _build_menu(self) -> None:
         menu = self.menuBar().addMenu("&Datei")
@@ -1218,9 +1285,6 @@ class MainWindow(QMainWindow):
             flat = page * per + i
             tile.setToolTip("Fehler im Kürzel" if flat in errors else "")
             tile.set_selected(self.slot is not None and flat == self.slot and not isinstance(slots[i], NavSlot))
-        # same gap as on the device, so the app icon lines up across the keys
-        gap = round(settings.key_spacing * PREVIEW_PX / KEY_SIZE[0])
-        self.deck_grid.setSpacing(max(0, gap - (self.tiles[0].width() - PREVIEW_PX)))
         self.page_label.setText(f"Seite {page + 1} / {pages}")
         self._push_deck_preview()
         self.prev_button.setEnabled(page > 0)
@@ -1232,10 +1296,10 @@ class MainWindow(QMainWindow):
         profile = clean_profile(copy.deepcopy(self.current_profile() or {"name": ""}))
         for button in profile.get("buttons", []):  # invalid shortcuts must not block the preview
             try:
-                if button.get("keys"):
-                    parse_shortcut(button["keys"])
+                button_chords(button)
             except ShortcutError:
-                del button["keys"]
+                for field in KEY_FIELDS:
+                    button.pop(field, None)
         if profile.get("title"):
             del profile["title"]
         ids = [m for m in profile.get("match", []) if not any(c in m for c in "*?[")]
@@ -1319,6 +1383,9 @@ class MainWindow(QMainWindow):
         self.keys_edit.stop_recording()
         self.label_edit.setText(b.get("label", "").replace(SOFT_HYPHEN, "|"))
         self.keys_edit.setText(b.get("keys", ""))
+        for name, edit in self.variant_edits.items():
+            edit.stop_recording()
+            edit.setText(b.get(f"keys_{name}", ""))
         self.button_color.set_color(b.get("color"))
         self.button_text_color.set_color(b.get("text_color"))
         self.button_icon.set_path(b.get("icon"))
@@ -1333,7 +1400,7 @@ class MainWindow(QMainWindow):
         if button is None:
             return
         button["label"] = self.label_edit.text().replace("|", SOFT_HYPHEN)
-        button["keys"] = self.keys_edit.text().strip()
+        button.update(self._key_fields())
         button["color"] = self.button_color.color()
         button["text_color"] = self.button_text_color.color()
         button["icon"] = self.button_icon.path()
@@ -1345,29 +1412,46 @@ class MainWindow(QMainWindow):
         self._render_timer.start()
 
     def _validate_keys(self) -> None:
-        text = self.keys_edit.text().strip()
-        if not text or self.keys_edit.recording:
-            self.keys_error.setText("")
+        edits = [self.keys_edit, *self.variant_edits.values()]
+        if any(e.recording for e in edits):
+            self._show_keys_error("")
             return
         try:
-            parse_shortcut(text)
-            self.keys_error.setText("")
+            button_chords(self._key_fields())
+            self._show_keys_error("")
         except ShortcutError as e:
-            self.keys_error.setText(str(e))
+            self._show_keys_error(str(e))
 
-    def _toggle_record(self) -> None:
-        if self.keys_edit.recording:
-            self.keys_edit.stop_recording()
-        else:
-            self.keys_edit.start_recording()
+    def _show_keys_error(self, text: str) -> None:
+        self.keys_error.setText(text)
+        self._button_form.setRowVisible(self.keys_error, bool(text))
+
+    def _key_fields(self) -> dict:
+        fields = {"keys": self.keys_edit.text().strip()}
+        fields.update({f"keys_{n}": e.text().strip() for n, e in self.variant_edits.items()})
+        return fields
+
+    def _shortcut_row(self, placeholder: str, compact: bool = False):
+        edit = ShortcutEdit()
+        edit.setPlaceholderText(placeholder)
+        edit.textChanged.connect(self._button_changed)
+        idle = "⏺" if compact else "⏺ Aufnehmen"
+        button = QPushButton(idle, clicked=lambda: edit.stop_recording() if edit.recording else edit.start_recording())
+        button.setToolTip("Tastenkombination aufnehmen")
+        edit.recordingChanged.connect(lambda on: button.setText(("■" if compact else "■ Fertig") if on else idle))
+        row = QHBoxLayout()
+        row.addWidget(edit, 1)
+        row.addWidget(button)
+        return edit, row
 
 
 def main(config_path: Path | None = None) -> int:
     app = QApplication.instance() or QApplication(sys.argv)
     app.setApplicationName("Daily Deck Profile")
-    app.setDesktopFileName("io.github.thnow.dailydeck.Editor")
-    from .tray import app_icon
+    from .tray import app_icon, install_translations
 
+    install_translations(app)
+    app.setDesktopFileName("io.github.thnow.dailydeck.Editor")
     app.setWindowIcon(app_icon())
     path = (config_path or default_config_path()).expanduser().resolve()
     window = MainWindow(path)

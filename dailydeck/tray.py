@@ -7,7 +7,7 @@ import sys
 import threading
 from pathlib import Path
 
-from PySide6.QtCore import QLockFile, QObject, QPointF, QRectF, Qt, QTimer
+from PySide6.QtCore import QLibraryInfo, QLockFile, QObject, QPointF, QRectF, Qt, QTimer, QTranslator
 from PySide6.QtGui import QAction, QActionGroup, QColor, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QSystemTrayIcon
 
@@ -300,6 +300,13 @@ def _notify(tray: TrayApp, message: str) -> None:
         QMessageBox.information(None, "Daily Deck", message)
 
 
+def install_translations(app: QApplication) -> None:
+    """German texts for Qt's own buttons and dialogs (Abbrechen, Ja, Nein …), matching the rest of the UI."""
+    translator = QTranslator(app)
+    if translator.load("qtbase_de", QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)):
+        app.installTranslator(translator)
+
+
 def main(config_path: Path | None = None) -> int:
     if not logging.getLogger().handlers:
         logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
@@ -307,6 +314,7 @@ def main(config_path: Path | None = None) -> int:
         logging.getLogger("PIL").setLevel(logging.INFO)
     app = QApplication.instance() or QApplication(sys.argv)
     app.setApplicationName("Daily Deck")
+    install_translations(app)
     app.setDesktopFileName("io.github.thnow.dailydeck")
     app.setWindowIcon(app_icon())
     app.setQuitOnLastWindowClosed(False)

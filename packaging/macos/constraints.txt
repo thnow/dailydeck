@@ -1,0 +1,5 @@
+# Versions for the macOS app bundle (scripts/build-macos.sh), chosen so that every
+# binary runs on macOS 12. Newer PySide6 wheels say macOS 13/14 but their modules
+# are built for macOS 15 (6.10, 6.11) or 26 (6.12).
+PySide6-Essentials==6.9.3
+shiboken6==6.9.3

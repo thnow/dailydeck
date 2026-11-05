@@ -38,3 +38,11 @@ def test_invalid(text):
 def test_display_names():
     assert format_shortcut(parse_shortcut("alt+left")) == "Alt+←"
     assert format_shortcut(parse_shortcut("ctrl+pagedown")) == "Ctrl+PgDn"
+
+
+@pytest.mark.parametrize(("platform", "mod"), [("darwin", "super"), ("linux", "ctrl"), ("win32", "ctrl")])
+def test_primary(platform, mod):
+    (chord,) = parse_shortcut("primary+shift+t", platform)
+    assert chord.modifiers == frozenset({mod, "shift"})
+    (chord,) = parse_shortcut("mod", platform)  # alias, also usable alone
+    assert chord.modifiers == frozenset({mod})

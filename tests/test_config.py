@@ -2,8 +2,9 @@ from pathlib import Path
 
 import pytest
 
-from dailydeck.config import DATA_DIR, ConfigError, load_config, parse_config
+from dailydeck.config import DATA_DIR, ConfigError, button_chords, load_config, parse_config
 from dailydeck.focus import WindowInfo
+from dailydeck.keys import ShortcutError, parse_shortcut
 
 
 def test_bundled_default_config_is_valid():
@@ -38,3 +39,41 @@ def test_settings_defaults_and_values():
     assert config.settings.brightness == 30
     assert config.settings.font == "Ubuntu:Bold"
     assert config.settings.app_icon is True
+
+
+def test_platform_variants():
+    button = {"keys": "primary+shift+z", "keys_windows": "primary+y"}
+    assert button_chords(button, "macos") == parse_shortcut("cmd+shift+z")
+    assert button_chords(button, "linux") == parse_shortcut("ctrl+shift+z")
+    assert button_chords(button, "windows") == parse_shortcut("ctrl+y")
+    assert button_chords({"keys_macos": "enter"}, "linux") == ()  # only on the Mac
+
+    with pytest.raises(ShortcutError, match="keys_linux"):  # checked on every system
+        button_chords({"keys": "f2", "keys_linux": "ctrl+foo"}, "macos")
+
+
+@pytest.mark.parametrize("platform", ["macos", "windows", "linux"])
+def test_bundled_default_config_on_every_system(platform):
+    import tomllib
+
+    data = tomllib.loads((DATA_DIR / "default_config.toml").read_text(encoding="utf-8"))
+    for profile in data["profiles"]:
+        for button in profile.get("buttons", []):
+            button_chords(button, platform)  # raises on invalid keys
+
+
+def test_untouched_old_default_is_updated(tmp_path, monkeypatch):
+    import dailydeck.config as config
+
+    fixture = Path(__file__).parent / "data" / "default_config-0.1.0.toml"
+    assert config._content_hash(fixture) in config.PREVIOUS_DEFAULTS
+    old = fixture.read_bytes()
+    monkeypatch.setattr(config, "config_dir", lambda: tmp_path)
+    user = tmp_path / "config.toml"
+    user.write_bytes(old.replace(b"\n", b"\r\n"))  # as checked out on Windows
+    assert config.default_config_path().read_bytes() == (DATA_DIR / "default_config.toml").read_bytes()
+    assert (tmp_path / "config.toml.bak").read_bytes() == old.replace(b"\n", b"\r\n")
+
+    user.write_bytes(old + b"# edited\n")  # edited configs stay
+    config.default_config_path()
+    assert user.read_bytes() == old + b"# edited\n"

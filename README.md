@@ -9,7 +9,10 @@ Ein Tastendruck auf dem Deck löst das jeweilige Kürzel aus.
   kurz auf, danach scheint es gedimmt durch die Tasten.
 - Grafischer Editor für Profile; einzelne Profile lassen sich als `.dailydeck` exportieren
   und importieren, um sie weiterzugeben.
-- Kürzel werden passend zum Tastaturlayout gesendet: `ctrl+z` bleibt auch auf QWERTZ „Rückgängig“.
+- Kürzel werden passend zum Tastaturlayout gesendet: `primary+z` bleibt auch auf QWERTZ „Rückgängig“.
+- Ein Profil für alle Systeme: `primary` ist ⌘ auf dem Mac und Strg unter Linux/Windows; wo ein
+  Programm ganz andere Tasten nutzt, gibt es pro Taste `keys_macos`, `keys_windows`, `keys_linux`.
+  Ein Deck fest am Monitor zeigt so an jedem angesteckten Rechner dieselben Funktionen.
 - Getestet mit Stream Deck MK.2 unter Ubuntu 26.04 / GNOME 50 (Wayland). Andere Stream-Deck-Modelle
   werden über die Bibliothek [`streamdeck`](https://github.com/abcminiuser/python-elgato-streamdeck)
   ebenfalls unterstützt.
@@ -24,6 +27,14 @@ sudo apt install ./dist/dailydeck_*_all.deb
 Danach im Startmenü **„Daily Deck“** starten (Symbol in der oberen Leiste). Beim
 ersten Start richtet die App die GNOME-Erweiterung zur Fenstererkennung ein; unter Wayland wirkt
 sie nach **einmal Ab- und Anmelden**. Den Autostart schaltet man im Leistenmenü ein.
+
+## Installation (macOS)
+
+`DailyDeck-<version>-macos-arm64.dmg` aus den [Releases](https://github.com/thnow/dailydeck/releases)
+laden (Apple Silicon, ab macOS 12), öffnen und **Daily Deck** nach *Programme* ziehen. Beim ersten
+Start fragt macOS nach der Freigabe unter Systemeinstellungen → Datenschutz & Sicherheit →
+**Bedienungshilfen** – ohne sie kann die App keine Tastendrücke senden. Die Elgato-Software darf
+nicht gleichzeitig laufen. Selbst bauen: [docs/MACOS.md](docs/MACOS.md).
 
 Releases, weitere Plattformen und die Build-Pipeline: [docs/RELEASING.md](docs/RELEASING.md).
 
@@ -79,7 +90,10 @@ ersten Speichern bleibt als `config.toml.bak` erhalten.
 - **Deck-Vorschau:** zeigt exakt das, was das Deck anzeigt. Taste anklicken zum Bearbeiten,
   ziehen zum Tauschen, Rechtsklick zum Leeren.
 - **Kürzel:** „Aufnehmen“ und die Tastenkombination drücken; mehrere nacheinander ergeben
-  eine Folge (`ctrl+k z`). Nach 1,5 s Pause endet die Aufnahme.
+  eine Folge (`primary+k z`). Nach 1,5 s Pause endet die Aufnahme. Strg (Mac: ⌘) wird als
+  `primary` aufgenommen, damit das Kürzel auf allen Systemen passt.
+- **macOS / Windows / Linux:** optional ein abweichendes Kürzel nur für dieses System
+  (leer = wie oben). Fehler in einer Variante werden auf jedem System angezeigt.
 - **Beschriftung:** `|` markiert, wo ein langes Wort getrennt werden darf (`Seiten|leiste`).
 - Bilder (Programmicon, Tastensymbole) werden nach `~/.config/dailydeck/icons/` kopiert.
 - **Schriftart:** global unter *Einstellungen*, pro Profil im Profilbereich. Gespeichert wird der
@@ -106,7 +120,12 @@ color = "#8f2d00"
 
   [[profiles.buttons]]
   label = "Neuer Tab"
-  keys = "ctrl+t"
+  keys = "primary+t"                # ⌘T auf dem Mac, sonst Strg+T
+
+  [[profiles.buttons]]
+  label = "Zurück"
+  keys = "alt+left"
+  keys_macos = "cmd+left"          # nur auf dem Mac
 ```
 
 Hilfsbefehle:
@@ -114,7 +133,7 @@ Hilfsbefehle:
 | Befehl | Zweck |
 |---|---|
 | `python -m dailydeck --print-focus` | zeigt die Kennungen des aktiven Fensters, die in `match` gehören |
-| `python -m dailydeck --dry-run "ctrl+/"` | zeigt, welche physischen Tasten gedrückt würden |
+| `python -m dailydeck --dry-run "primary+/"` | zeigt, welche physischen Tasten gedrückt würden |
 | `python -m dailydeck --preview DIR` | rendert alle Profile als PNG, ohne Gerät |
 
 ## Aufbau
@@ -138,12 +157,13 @@ dailydeck/
     gnome.py          GNOME (Wayland + X11) über die Shell-Extension per D-Bus
     x11.py            X11 über xprop (Fallback)
     windows.py        Win32 GetForegroundWindow        (vorbereitet, ungetestet)
-    macos.py          NSWorkspace frontmostApplication (vorbereitet, ungetestet)
+    macos.py          NSWorkspace frontmostApplication
   keys/             "Kürzel senden"
-    parse.py          "ctrl+shift+t" -> Chords
+    parse.py          "primary+shift+t" -> Chords (primary = ⌘ bzw. Strg)
     linux_uinput.py   virtuelle Tastatur über /dev/uinput (Wayland + X11)
     xkb.py            Layout-Auflösung über libxkbcommon
-    pynput_sender.py  Windows/macOS                    (vorbereitet, ungetestet)
+    macos_quartz.py   macOS: Quartz-Events, Layout über UCKeyTranslate
+    pynput_sender.py  Windows                          (vorbereitet, ungetestet)
 data/linux/         Desktop-Dateien, udev-Regel, AppStream-Metadaten, Manpage, systemd-Dienst
 debian/             Ubuntu/Debian-Paket
 scripts/            build-deb.sh, dev-setup.sh, version.py; ci/ = Build-Skript für Container/CI

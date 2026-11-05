@@ -8,11 +8,15 @@ __all__ = ["Chord", "KeySender", "ShortcutError", "create_key_sender", "format_s
 
 def create_key_sender(name: str = "auto", layout: str | None = None, variant: str | None = None) -> KeySender:
     if name == "auto":
-        name = "uinput" if sys.platform.startswith("linux") else "pynput"
+        name = {"darwin": "quartz", "win32": "pynput"}.get(sys.platform, "uinput")
     if name == "uinput":
         from .linux_uinput import UInputKeySender
 
         return UInputKeySender(layout, variant)
+    if name == "quartz":
+        from .macos_quartz import QuartzKeySender
+
+        return QuartzKeySender()
     if name == "pynput":
         from .pynput_sender import PynputKeySender
 

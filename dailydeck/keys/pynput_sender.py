@@ -1,8 +1,6 @@
-"""Windows / macOS / X11 backend using ``pynput``. Not yet tested.
+"""Windows backend using ``pynput`` (macOS uses ``macos_quartz``, Linux ``uinput``)."""
 
-On macOS the process needs the Accessibility permission.
-"""
-
+import logging
 import sys
 import time
 
@@ -36,6 +34,7 @@ for _name, _attr in (("insert", "insert"), ("print", "print_screen"), ("menu", "
 
 KEY_DELAY = 0.012
 
+log = logging.getLogger(__name__)
 
 class PynputKeySender(KeySender):
     name = "pynput"
@@ -44,7 +43,6 @@ class PynputKeySender(KeySender):
         self._kb = Controller()
 
     def resolve(self, chord: Chord) -> list:
-        # "cmd" is the natural primary modifier on macOS, "super" elsewhere
         keys = [MODIFIER_KEYS[m] for m in ("ctrl", "alt", "altgr", "shift", "super") if m in chord.modifiers]
         if not chord.key:
             pass

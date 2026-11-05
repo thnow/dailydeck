@@ -22,6 +22,14 @@ _FONT_CANDIDATES = {
     "darwin": ["/System/Library/Fonts/SFNS.ttf", "/System/Library/Fonts/Helvetica.ttc"],
 }
 
+DEFAULT_FONT_NAMES = {"linux": "DejaVu Sans Bold", "win32": "Segoe UI Bold", "darwin": "SF Pro"}
+
+
+def default_font_name() -> str:
+    """What the built-in font is called on this system, for the settings dialog."""
+    platform = "linux" if sys.platform.startswith("linux") else sys.platform
+    return DEFAULT_FONT_NAMES.get(platform, "Systemschrift")
+
 
 @functools.cache
 def _resolve(preferred: str | None) -> ResolvedFont | None:

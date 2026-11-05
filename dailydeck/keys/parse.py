@@ -6,6 +6,7 @@ character (resolved through the active keyboard layout) or one of the named
 keys in ``NAMED_KEYS``.
 """
 
+import sys
 from dataclasses import dataclass
 
 MODIFIER_ALIASES = {
@@ -17,7 +18,19 @@ MODIFIER_ALIASES = {
     "command": "super", "logo": "super",
 }
 
+# "primary" is the platform's main shortcut modifier: Cmd on macOS, Ctrl elsewhere.
+# It is resolved while parsing, so one profile gives Cmd+C on a Mac and Ctrl+C elsewhere.
+PRIMARY_ALIASES = ("primary", "mod")
+
+
+def primary_modifier(platform: str | None = None) -> str:
+    return "super" if (platform or sys.platform) == "darwin" else "ctrl"
+
+
 MODIFIER_ORDER = ("ctrl", "alt", "altgr", "shift", "super")
+
+MODIFIER_DISPLAY = {"ctrl": "Ctrl", "alt": "Alt", "altgr": "AltGr", "shift": "Shift",
+                    "super": {"darwin": "Cmd", "win32": "Win"}.get(sys.platform, "Super")}
 
 # canonical name -> aliases
 _NAMED = {
@@ -75,7 +88,7 @@ class Chord:
     is_char: bool
 
     def __str__(self) -> str:
-        mods = [m.capitalize() if m != "altgr" else "AltGr" for m in MODIFIER_ORDER if m in self.modifiers]
+        mods = [MODIFIER_DISPLAY[m] for m in MODIFIER_ORDER if m in self.modifiers]
         if not self.key:
             return "+".join(mods)
         if self.is_char:
@@ -91,7 +104,14 @@ class ShortcutError(ValueError):
     pass
 
 
-def parse_chord(text: str) -> Chord:
+def _modifier(name: str, platform: str | None) -> str | None:
+    name = name.lower()
+    if name in PRIMARY_ALIASES:
+        return primary_modifier(platform)
+    return MODIFIER_ALIASES.get(name)
+
+
+def parse_chord(text: str, platform: str | None = None) -> Chord:
     if text.endswith("++"):  # "ctrl++" means ctrl and the plus key
         parts = text[:-2].split("+") + ["+"]
     elif text == "+":
@@ -104,7 +124,7 @@ def parse_chord(text: str) -> Chord:
     *mod_parts, key_part = parts
     modifiers = set()
     for part in mod_parts:
-        mod = MODIFIER_ALIASES.get(part.lower())
+        mod = _modifier(part, platform)
         if mod is None:
             raise ShortcutError(f"unknown modifier {part!r} in {text!r}")
         modifiers.add(mod)
@@ -117,14 +137,15 @@ def parse_chord(text: str) -> Chord:
         return Chord(frozenset(modifiers), CHAR_ALIASES[lower], True)
     if lower in NAMED_KEYS:
         return Chord(frozenset(modifiers), NAMED_KEYS[lower], False)
-    if lower in MODIFIER_ALIASES:
+    if (mod := _modifier(lower, platform)) is not None:
         # modifiers only, e.g. "super" to open the GNOME overview
-        return Chord(frozenset(modifiers | {MODIFIER_ALIASES[lower]}), "", False)
+        return Chord(frozenset(modifiers | {mod}), "", False)
     raise ShortcutError(f"unknown key {key_part!r} in {text!r}")
 
 
-def parse_shortcut(text: str) -> tuple[Chord, ...]:
-    chords = tuple(parse_chord(part) for part in text.split())
+def parse_shortcut(text: str, platform: str | None = None) -> tuple[Chord, ...]:
+    """``platform`` (a ``sys.platform`` value) decides what ``primary`` means; default: this system."""
+    chords = tuple(parse_chord(part, platform) for part in text.split())
     if not chords:
         raise ShortcutError("empty shortcut")
     return chords
