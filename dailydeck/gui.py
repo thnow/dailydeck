@@ -36,6 +36,8 @@ from PySide6.QtWidgets import (
     QMenu,
     QMessageBox,
     QPushButton,
+    QScrollArea,
+    QSizePolicy,
     QSlider,
     QSpinBox,
     QSplitter,
@@ -62,6 +64,7 @@ from .keys import ShortcutError
 from .layout import NavSlot, backdrop_tiles, icon_for, page_count, page_slots, per_page, render_slot
 from .preview import clear_request, make_payload, read_ack, request_from_payload, send_request
 from .profile_io import PROFILE_SUFFIX, clean_profile, export_profile, import_profile, save_config
+from .render import default_font_name
 
 COLS, ROWS = 5, 3
 KEY_COUNT = COLS * ROWS
@@ -142,6 +145,21 @@ def chord_from_event(event) -> str | None:
     else:
         return None
     return "+".join(mods + [name])
+
+
+def _form(parent: QWidget) -> QFormLayout:
+    """A form whose fields use the free width (macOS keeps them at their size hint)."""
+    form = QFormLayout(parent)
+    form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+    form.setVerticalSpacing(10)  # even rows; the style spaces rows with buttons further apart
+    return form
+
+
+def _compact(widget: QWidget) -> QWidget:
+    """Keeps a spin box at its natural width inside a growing form."""
+    widget.setSizePolicy(QSizePolicy.Policy.Fixed, widget.sizePolicy().verticalPolicy())
+    widget.setMinimumWidth(110)
+    return widget
 
 
 class ShortcutEdit(QLineEdit):
@@ -539,31 +557,44 @@ class SettingsDialog(QDialog):
         defaults = parse_settings({})
         get = lambda key: settings.get(key, getattr(defaults, key))  # noqa: E731
 
-        form = QFormLayout(self)
-        self.font = FontCombo("Standard (DejaVu Sans Bold)")
+        layout = QVBoxLayout(self)
+
+        keys = QGroupBox("Tasten")
+        form = _form(keys)
+        self.font = FontCombo(f"Standard ({default_font_name()})")
         self.font.set_spec(settings.get("font"))
         self.font.setMinimumWidth(320)
         form.addRow("Schriftart", self.font)
         self.brightness = self._slider(int(get("brightness")))
         form.addRow("Helligkeit Deck", self.brightness)
         self.show_keys = QCheckBox("Kürzel unter der Beschriftung anzeigen", checked=bool(get("show_keys")))
-        form.addRow(self.show_keys)
-        self.app_icon = QCheckBox("Programmicon über alle Tasten einblenden", checked=bool(get("app_icon")))
-        form.addRow(self.app_icon)
+        form.addRow("", self.show_keys)
+        layout.addWidget(keys)
+
+        icon = QGroupBox("Programmicon")
+        form = _form(icon)
+        self.app_icon = QCheckBox("Icon des Programms über alle Tasten einblenden", checked=bool(get("app_icon")))
+        form.addRow("", self.app_icon)
         self.icon_brightness = self._slider(round(get("app_icon_brightness") * 100))
-        form.addRow("Helligkeit Programmicon", self.icon_brightness)
+        form.addRow("Helligkeit Icon", self.icon_brightness)
         self.opacity = self._slider(round(get("button_opacity") * 100))
+        self.opacity.setToolTip("Wie stark die Tastenfarbe das Icon überdeckt")
         form.addRow("Deckkraft der Tasten", self.opacity)
         self.flash = QDoubleSpinBox(minimum=0, maximum=5, singleStep=0.1, suffix=" s",
                                     value=float(get("app_icon_flash")))
-        form.addRow("Icon aufblitzen beim Wechsel", self.flash)
+        self.flash.setToolTip("So lange leuchtet das Icon nach einem Programmwechsel in voller Helligkeit; 0 = aus")
+        form.addRow("Aufblitzen beim Wechsel", _compact(self.flash))
         self.spacing = QSpinBox(minimum=0, maximum=100, suffix=" px", value=int(get("key_spacing")))
-        self.spacing.setToolTip("Abstand zwischen den Tasten, damit das Icon durchgehend wirkt")
-        form.addRow("Tastenabstand", self.spacing)
+        self.spacing.setToolTip("Abstand zwischen den Tasten am Gerät, damit das Icon durchgehend wirkt")
+        form.addRow("Tastenabstand am Gerät", _compact(self.spacing))
+        layout.addWidget(icon)
+        self.app_icon.toggled.connect(self._icon_rows_enabled)
+        self._icon_rows_enabled(self.app_icon.isChecked())
+
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
-        form.addRow(buttons)
+        layout.addWidget(buttons)
 
         self.font.changed.connect(self._changed)
         for box in (self.brightness, self.icon_brightness, self.opacity):
@@ -572,6 +603,10 @@ class SettingsDialog(QDialog):
             check.toggled.connect(self._changed)
         self.flash.valueChanged.connect(self._changed)
         self.spacing.valueChanged.connect(self._changed)
+
+    def _icon_rows_enabled(self, on: bool) -> None:
+        for widget in (self.icon_brightness, self.opacity, self.flash, self.spacing):
+            widget.setEnabled(on)
 
     def _changed(self, *_) -> None:
         self.apply(self._settings)
@@ -675,13 +710,19 @@ class MainWindow(QMainWindow):
 
         right = QWidget()
         rv = QVBoxLayout(right)
-        splitter.addWidget(right)
+        # scrolls on small screens (e.g. a 13" notebook) instead of running off the bottom
+        scroll = QScrollArea()
+        scroll.setWidget(right)
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        splitter.addWidget(scroll)
         splitter.setStretchFactor(1, 1)
         splitter.setSizes([260, 760])
 
         # profile properties
         box = QGroupBox("Profil")
-        form = QFormLayout(box)
+        form = _form(box)
         self.name_edit = QLineEdit()
         self.name_edit.textEdited.connect(self._profile_changed)
         form.addRow("Name", self.name_edit)
@@ -726,6 +767,8 @@ class MainWindow(QMainWindow):
         frame.setStyleSheet("background:#151515; border-radius:10px;")
         grid = QGridLayout(frame)
         grid.setContentsMargins(14, 14, 14, 14)
+        # compact: the tiles' selection margin alone leaves an 8 px gap; the device keeps key_spacing
+        grid.setSpacing(0)
         self.deck_grid = grid
         self.tiles: list[KeyTile] = []
         for i in range(KEY_COUNT):
@@ -765,7 +808,7 @@ class MainWindow(QMainWindow):
 
         # button editor
         self.button_box = QGroupBox("Taste")
-        bf = QFormLayout(self.button_box)
+        bf = _form(self.button_box)
         self.label_edit = QLineEdit(placeholderText="Beschriftung")
         self.label_edit.setToolTip("Mit | markierst du, wo ein langes Wort getrennt werden darf, z. B. Seiten|leiste")
         self.label_edit.textEdited.connect(self._button_changed)
@@ -784,6 +827,8 @@ class MainWindow(QMainWindow):
         self.keys_error = QLabel()
         self.keys_error.setStyleSheet("color: #e53935;")
         bf.addRow("", self.keys_error)
+        bf.setRowVisible(self.keys_error, False)  # only takes room when there is an error
+        self._button_form = bf
         colors = QHBoxLayout()
         self.button_color = ColorButton("vom Profil")
         self.button_color.changed.connect(self._button_changed)
@@ -800,6 +845,7 @@ class MainWindow(QMainWindow):
         bf.addRow("Symbol", self.button_icon)
         size_row = QHBoxLayout()
         self.font_size = QSpinBox(minimum=0, maximum=40, specialValueText="automatisch")
+        _compact(self.font_size).setMinimumWidth(130)  # room for "automatisch"
         self.font_size.valueChanged.connect(self._button_changed)
         size_row.addWidget(self.font_size)
         size_row.addStretch()
@@ -809,7 +855,12 @@ class MainWindow(QMainWindow):
         rv.addStretch()
 
         self.statusBar()
-        self.resize(1080, 900)
+        width, height = 1080, 900
+        screen = QApplication.primaryScreen()
+        if screen is not None:
+            free = screen.availableGeometry()
+            width, height = min(width, free.width() - 40), min(height, free.height() - 40)
+        self.resize(width, height)
 
     def _build_menu(self) -> None:
         menu = self.menuBar().addMenu("&Datei")
@@ -1234,9 +1285,6 @@ class MainWindow(QMainWindow):
             flat = page * per + i
             tile.setToolTip("Fehler im Kürzel" if flat in errors else "")
             tile.set_selected(self.slot is not None and flat == self.slot and not isinstance(slots[i], NavSlot))
-        # same gap as on the device, so the app icon lines up across the keys
-        gap = round(settings.key_spacing * PREVIEW_PX / KEY_SIZE[0])
-        self.deck_grid.setSpacing(max(0, gap - (self.tiles[0].width() - PREVIEW_PX)))
         self.page_label.setText(f"Seite {page + 1} / {pages}")
         self._push_deck_preview()
         self.prev_button.setEnabled(page > 0)
@@ -1366,13 +1414,17 @@ class MainWindow(QMainWindow):
     def _validate_keys(self) -> None:
         edits = [self.keys_edit, *self.variant_edits.values()]
         if any(e.recording for e in edits):
-            self.keys_error.setText("")
+            self._show_keys_error("")
             return
         try:
             button_chords(self._key_fields())
-            self.keys_error.setText("")
+            self._show_keys_error("")
         except ShortcutError as e:
-            self.keys_error.setText(str(e))
+            self._show_keys_error(str(e))
+
+    def _show_keys_error(self, text: str) -> None:
+        self.keys_error.setText(text)
+        self._button_form.setRowVisible(self.keys_error, bool(text))
 
     def _key_fields(self) -> dict:
         fields = {"keys": self.keys_edit.text().strip()}
@@ -1396,9 +1448,10 @@ class MainWindow(QMainWindow):
 def main(config_path: Path | None = None) -> int:
     app = QApplication.instance() or QApplication(sys.argv)
     app.setApplicationName("Daily Deck Profile")
-    app.setDesktopFileName("io.github.thnow.dailydeck.Editor")
-    from .tray import app_icon
+    from .tray import app_icon, install_translations
 
+    install_translations(app)
+    app.setDesktopFileName("io.github.thnow.dailydeck.Editor")
     app.setWindowIcon(app_icon())
     path = (config_path or default_config_path()).expanduser().resolve()
     window = MainWindow(path)
