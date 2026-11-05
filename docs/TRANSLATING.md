@@ -23,10 +23,10 @@ or a plain text editor. Then check it and try it:
 
 ```bash
 python3 scripts/i18n.py check             # placeholders, syntax, coverage
-dailydeck --gui                           # uses your system language …
+dailydeck --gui                           # follows the system language
 ```
 
-… or pick the language in the editor under *Settings → Language* (restart afterwards).
+or pick the language in the editor under *Settings → Language* and restart.
 Open a pull request with the `.po` file – partial translations are welcome, untranslated
 texts simply stay English.
 
