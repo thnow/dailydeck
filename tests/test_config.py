@@ -63,14 +63,11 @@ def test_bundled_default_config_on_every_system(platform):
 
 
 def test_untouched_old_default_is_updated(tmp_path, monkeypatch):
-    import subprocess
-
     import dailydeck.config as config
 
-    old = subprocess.run(["git", "show", "2efa458:dailydeck/data/default_config.toml"],
-                         capture_output=True, check=False).stdout
-    if not old:
-        pytest.skip("needs the git history")
+    fixture = Path(__file__).parent / "data" / "default_config-0.1.0.toml"
+    assert config._content_hash(fixture) in config.PREVIOUS_DEFAULTS
+    old = fixture.read_bytes()
     monkeypatch.setattr(config, "config_dir", lambda: tmp_path)
     user = tmp_path / "config.toml"
     user.write_bytes(old.replace(b"\n", b"\r\n"))  # as checked out on Windows
