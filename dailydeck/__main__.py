@@ -3,7 +3,8 @@ import logging
 import time
 from pathlib import Path
 
-from .config import ConfigError, default_config_path, load_config
+from .config import ConfigError, default_config_path, load_config, setup_language
+from .i18n import _
 
 
 def main() -> int:
@@ -30,6 +31,7 @@ def main() -> int:
         datefmt="%H:%M:%S",
     )
     logging.getLogger("PIL").setLevel(logging.INFO)
+    setup_language(args.config.expanduser() if args.config else None)
     config_path = (args.config or default_config_path()).expanduser().resolve()
 
     if args.tray:
@@ -57,7 +59,7 @@ def _print_focus() -> int:
 
     provider = create_focus_provider()
     last = None
-    print("Wechsle zwischen Fenstern; Strg+C beendet.")
+    print(_("Switch between windows; Ctrl+C quits."))
     try:
         while True:
             info = provider.get()
@@ -75,7 +77,7 @@ def _dry_run(config_path: Path, shortcut: str) -> int:
     try:
         chords = parse_shortcut(shortcut)
     except ShortcutError as e:
-        print(f"Fehler: {e}")
+        print(_("Error: {error}").format(error=e))
         return 1
     try:
         s = load_config(config_path).settings
@@ -99,7 +101,7 @@ def _preview(config_path: Path, out_dir: Path) -> int:
     try:
         config = load_config(config_path)
     except ConfigError as e:
-        print(f"Fehler: {e}")
+        print(_("Error: {error}").format(error=e))
         return 1
     s = config.settings
     cols, rows, size = 5, 3, 72

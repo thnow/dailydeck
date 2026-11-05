@@ -30,7 +30,7 @@ def test_first_matching_profile_wins_and_default():
 
 
 def test_invalid_shortcut_names_profile_and_button():
-    with pytest.raises(ConfigError, match="Firefox.*button 1"):
+    with pytest.raises(ConfigError, match="Firefox.*key 1"):
         make([{"name": "Firefox", "buttons": [{"label": "x", "keys": "ctrl+nonsense"}]}])
 
 
@@ -62,16 +62,17 @@ def test_bundled_default_config_on_every_system(platform):
             button_chords(button, platform)  # raises on invalid keys
 
 
-def test_untouched_old_default_is_updated(tmp_path, monkeypatch):
+@pytest.mark.parametrize("version", ["0.1.0", "0.2.0"])
+def test_untouched_old_default_is_updated(tmp_path, monkeypatch, version):
     import dailydeck.config as config
 
-    fixture = Path(__file__).parent / "data" / "default_config-0.1.0.toml"
+    fixture = Path(__file__).parent / "data" / f"default_config-{version}.toml"
     assert config._content_hash(fixture) in config.PREVIOUS_DEFAULTS
     old = fixture.read_bytes()
     monkeypatch.setattr(config, "config_dir", lambda: tmp_path)
     user = tmp_path / "config.toml"
     user.write_bytes(old.replace(b"\n", b"\r\n"))  # as checked out on Windows
-    assert config.default_config_path().read_bytes() == (DATA_DIR / "default_config.toml").read_bytes()
+    assert config.default_config_path().read_text(encoding="utf-8") == config.localized_default_config()
     assert (tmp_path / "config.toml.bak").read_bytes() == old.replace(b"\n", b"\r\n")
 
     user.write_bytes(old + b"# edited\n")  # edited configs stay

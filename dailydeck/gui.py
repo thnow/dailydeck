@@ -46,6 +46,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from . import i18n
 from .config import (
     KEY_FIELDS,
     PLATFORM_LABELS,
@@ -58,8 +59,10 @@ from .config import (
     load_button,
     parse_settings,
     read_config_data,
+    setup_language,
 )
 from .fonts import font_spec, list_fonts, split_spec
+from .i18n import N_, _
 from .keys import ShortcutError
 from .layout import NavSlot, backdrop_tiles, icon_for, page_count, page_slots, per_page, render_slot
 from .preview import clear_request, make_payload, read_ack, request_from_payload, send_request
@@ -110,7 +113,7 @@ QT_MODIFIER_KEYS = {
     _k("Key_Super_R"): "super",
 }
 CHAR_NAMES = {"+": "plus", "-": "minus", " ": "space"}
-KEYS_PLACEHOLDER = "z. B. primary+shift+t (primary = Strg, auf dem Mac ⌘)"
+KEYS_PLACEHOLDER = N_("e.g. primary+shift+t (primary = Ctrl, ⌘ on the Mac)")
 
 
 def _modifier_names(mods) -> list[str]:
@@ -147,7 +150,7 @@ def chord_from_event(event) -> str | None:
     return "+".join(mods + [name])
 
 
-def _form(parent: QWidget) -> QFormLayout:
+def _form(parent: QWidget | None) -> QFormLayout:
     """A form whose fields use the free width (macOS keeps them at their size hint)."""
     form = QFormLayout(parent)
     form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
@@ -183,7 +186,7 @@ class ShortcutEdit(QLineEdit):
         self._chords = []
         self._pending_mods = []
         self.setText("")
-        self.setPlaceholderText("Tastenkombination drücken …")
+        self.setPlaceholderText(_("Press a key combination …"))
         self.setFocus()
         self.grabKeyboard()
         self.recordingChanged.emit(True)
@@ -247,16 +250,16 @@ class ColorButton(QWidget):
 
     changed = Signal(object)
 
-    def __init__(self, inherit_text: str = "Standard", parent=None):
+    def __init__(self, inherit_text: str | None = None, parent=None):
         super().__init__(parent)
         self._color: str | None = None
-        self._inherit = inherit_text
+        self._inherit = inherit_text or _("Default")
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         self._button = QPushButton(clicked=self._pick)
         self._button.setMinimumWidth(110)
         self._reset = QToolButton(text="×", clicked=lambda: self._set(None, emit=True))
-        self._reset.setToolTip("Zurücksetzen")
+        self._reset.setToolTip(_("Reset"))
         layout.addWidget(self._button)
         layout.addWidget(self._reset)
         self._update()
@@ -275,7 +278,7 @@ class ColorButton(QWidget):
 
     def _pick(self) -> None:
         initial = QColor(self._color) if self._color else QColor("#303030")
-        color = QColorDialog.getColor(initial, self, "Farbe wählen")
+        color = QColorDialog.getColor(initial, self, _("Choose colour"))
         if color.isValid():
             self._set(color.name(), emit=True)
 
@@ -296,15 +299,15 @@ class IconPicker(QWidget):
 
     changed = Signal(object)
 
-    def __init__(self, config_dir_getter, placeholder: str = "kein Bild", parent=None):
+    def __init__(self, config_dir_getter, placeholder: str | None = None, parent=None):
         super().__init__(parent)
         self._config_dir = config_dir_getter
         self._path: str | None = None
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        self._label = QLineEdit(readOnly=True, placeholderText=placeholder)
+        self._label = QLineEdit(readOnly=True, placeholderText=placeholder or _("no image"))
         layout.addWidget(self._label, 1)
-        layout.addWidget(QPushButton("Wählen …", clicked=self._pick))
+        layout.addWidget(QPushButton(_("Choose …"), clicked=self._pick))
         self._reset = QToolButton(text="×", clicked=lambda: self._set(None, emit=True))
         layout.addWidget(self._reset)
         self._update()
@@ -326,8 +329,9 @@ class IconPicker(QWidget):
         self._reset.setEnabled(self._path is not None)
 
     def _pick(self) -> None:
-        file, _ = QFileDialog.getOpenFileName(
-            self, "Bild wählen", str(Path.home()), "Bilder (*.png *.svg *.jpg *.jpeg *.gif *.webp *.ico *.icns)")
+        file, _filter = QFileDialog.getOpenFileName(
+            self, _("Choose image"), str(Path.home()),
+            _("Images") + " (*.png *.svg *.jpg *.jpeg *.gif *.webp *.ico *.icns)")
         if not file:
             return
         src = Path(file)
@@ -402,7 +406,7 @@ class KeyTile(QLabel):
         if not self.movable:
             return
         menu = QMenu(self)
-        menu.addAction("Taste leeren", lambda: self.clearRequested.emit(self.index))
+        menu.addAction(_("Clear key"), lambda: self.clearRequested.emit(self.index))
         menu.exec(event.globalPos())
 
 
@@ -422,7 +426,7 @@ class FontCombo(QComboBox):
         completer = self.completer()
         completer.setFilterMode(Qt.MatchFlag.MatchContains)
         completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
-        self.lineEdit().setPlaceholderText("Schrift suchen …")
+        self.lineEdit().setPlaceholderText(_("Search fonts …"))
         self._spec: str | None = None
         self.activated.connect(self._on_activated)
         self.lineEdit().editingFinished.connect(self._on_edit_finished)
@@ -435,7 +439,8 @@ class FontCombo(QComboBox):
         index = self.findData(spec)
         if index < 0:  # e.g. a font of another machine or a file path
             family, style = split_spec(spec)
-            self.addItem(f"{family} – {style} (nicht installiert)" if style else f"{spec} (nicht gefunden)", spec)
+            self.addItem(_("{family} – {style} (not installed)").format(family=family, style=style) if style
+                         else _("{font} (not found)").format(font=spec), spec)
             index = self.count() - 1
         self.blockSignals(True)
         self.setCurrentIndex(index)
@@ -479,7 +484,7 @@ class DeckPreview(QObject):
         self.update(profile, settings, config_dir, ids, page)
         self._heartbeat.start()
         self._ack_timer.start()
-        self.status.emit("Vorschau auf dem Deck – Tasten lösen dabei nichts aus.")
+        self.status.emit(_("Preview on the deck – keys do nothing meanwhile."))
 
     def update(self, profile: dict, settings: dict, config_dir: Path, ids, page: int) -> None:
         if not self.active:
@@ -493,7 +498,7 @@ class DeckPreview(QObject):
             else:
                 send_request(self._payload)
         except Exception as e:  # noqa: BLE001
-            self.status.emit(f"Vorschau fehlgeschlagen: {e}")
+            self.status.emit(_("Preview failed: {error}").format(error=e))
 
     def stop(self) -> None:
         if not self.active:
@@ -529,17 +534,17 @@ class DeckPreview(QObject):
 
             decks = DeviceManager().enumerate()
             if not decks:
-                self.status.emit("Kein Stream Deck gefunden.")
+                self.status.emit(_("No Stream Deck found."))
                 self.stop()
                 return
             request = request_from_payload(self._payload)
             config = Config(Path(self._payload["config_dir"]), request.settings, [request.profile])
             self._direct = DeckController(decks[0], NullKeySender(), config)
             self._direct.preview(request.profile, request.settings, request.ids, request.page)
-            self.status.emit("Daemon läuft nicht – Vorschau direkt auf dem Deck.")
+            self.status.emit(_("Daily Deck is not running – showing the preview on the deck directly."))
         except Exception as e:  # noqa: BLE001
             self._direct = None
-            self.status.emit(f"Stream Deck nicht verfügbar: {e}")
+            self.status.emit(_("Stream Deck not available: {error}").format(error=e))
             self.stop()
 
 
@@ -553,40 +558,51 @@ class SettingsDialog(QDialog):
         self._settings = settings
         self._original = copy.deepcopy(settings)
         self._on_change = on_change
-        self.setWindowTitle("Einstellungen")
+        self.setWindowTitle(_("Settings"))
         defaults = parse_settings({})
         get = lambda key: settings.get(key, getattr(defaults, key))  # noqa: E731
 
         layout = QVBoxLayout(self)
 
-        keys = QGroupBox("Tasten")
+        general = _form(None)
+        self.language = QComboBox()
+        system = i18n.native_name(i18n.resolve())
+        self.language.addItem(_("System language ({language})").format(language=system), "auto")
+        for code in i18n.available_languages():
+            self.language.addItem(i18n.native_name(code), code)
+        self.language.setCurrentIndex(max(0, self.language.findData(str(get("language")))))
+        self.language.setToolTip(_("Takes effect after restarting Daily Deck"))
+        general.addRow(_("Language"), self.language)
+        layout.addLayout(general)
+
+        keys = QGroupBox(_("Keys"))
         form = _form(keys)
-        self.font = FontCombo(f"Standard ({default_font_name()})")
+        self.font = FontCombo(_("Default ({font})").format(font=default_font_name()))
         self.font.set_spec(settings.get("font"))
         self.font.setMinimumWidth(320)
-        form.addRow("Schriftart", self.font)
+        form.addRow(_("Font"), self.font)
         self.brightness = self._slider(int(get("brightness")))
-        form.addRow("Helligkeit Deck", self.brightness)
-        self.show_keys = QCheckBox("Kürzel unter der Beschriftung anzeigen", checked=bool(get("show_keys")))
+        form.addRow(_("Deck brightness"), self.brightness)
+        self.show_keys = QCheckBox(_("Show the shortcut below the label"), checked=bool(get("show_keys")))
         form.addRow("", self.show_keys)
         layout.addWidget(keys)
 
-        icon = QGroupBox("Programmicon")
+        icon = QGroupBox(_("App icon"))
         form = _form(icon)
-        self.app_icon = QCheckBox("Icon des Programms über alle Tasten einblenden", checked=bool(get("app_icon")))
+        self.app_icon = QCheckBox(_("Show the icon of the app across all keys"), checked=bool(get("app_icon")))
         form.addRow("", self.app_icon)
         self.icon_brightness = self._slider(round(get("app_icon_brightness") * 100))
-        form.addRow("Helligkeit Icon", self.icon_brightness)
+        form.addRow(_("Icon brightness"), self.icon_brightness)
         self.opacity = self._slider(round(get("button_opacity") * 100))
-        self.opacity.setToolTip("Wie stark die Tastenfarbe das Icon überdeckt")
-        form.addRow("Deckkraft der Tasten", self.opacity)
+        self.opacity.setToolTip(_("How much the key colour covers the icon"))
+        form.addRow(_("Key opacity"), self.opacity)
         self.flash = QDoubleSpinBox(minimum=0, maximum=5, singleStep=0.1, suffix=" s",
                                     value=float(get("app_icon_flash")))
-        self.flash.setToolTip("So lange leuchtet das Icon nach einem Programmwechsel in voller Helligkeit; 0 = aus")
-        form.addRow("Aufblitzen beim Wechsel", _compact(self.flash))
+        self.flash.setToolTip(_("How long the icon lights up at full brightness after switching apps; 0 = off"))
+        form.addRow(_("Flash on switch"), _compact(self.flash))
         self.spacing = QSpinBox(minimum=0, maximum=100, suffix=" px", value=int(get("key_spacing")))
-        self.spacing.setToolTip("Abstand zwischen den Tasten am Gerät, damit das Icon durchgehend wirkt")
-        form.addRow("Tastenabstand am Gerät", _compact(self.spacing))
+        self.spacing.setToolTip(_("Gap between the keys of the device, so the icon looks continuous"))
+        form.addRow(_("Key spacing on the device"), _compact(self.spacing))
         layout.addWidget(icon)
         self.app_icon.toggled.connect(self._icon_rows_enabled)
         self._icon_rows_enabled(self.app_icon.isChecked())
@@ -642,6 +658,10 @@ class SettingsDialog(QDialog):
         settings["button_opacity"] = round(self.opacity.slider.value() / 100, 2)
         settings["app_icon_flash"] = round(self.flash.value(), 2)
         settings["key_spacing"] = self.spacing.value()
+        if self.language.currentData() == "auto":
+            settings.pop("language", None)
+        else:
+            settings["language"] = self.language.currentData()
         if self.font.spec():
             settings["font"] = self.font.spec()
         else:
@@ -685,17 +705,17 @@ class MainWindow(QMainWindow):
         # profiles
         left = QWidget()
         lv = QVBoxLayout(left)
-        lv.addWidget(QLabel("<b>Profile</b> (erstes passendes gewinnt)"))
+        lv.addWidget(QLabel(_("<b>Profiles</b> (first match wins)")))
         self.profile_list = QListWidget()
         self.profile_list.currentRowChanged.connect(self._select_profile)
         lv.addWidget(self.profile_list, 1)
         row = QHBoxLayout()
         for text, tip, slot in (
-            ("+", "Neues Profil", self._add_profile),
-            ("⧉", "Profil duplizieren", self._duplicate_profile),
-            ("−", "Profil löschen", self._delete_profile),
-            ("↑", "Nach oben", lambda: self._move_profile(-1)),
-            ("↓", "Nach unten", lambda: self._move_profile(1)),
+            ("+", _("New profile"), self._add_profile),
+            ("⧉", _("Duplicate profile"), self._duplicate_profile),
+            ("−", _("Delete profile"), self._delete_profile),
+            ("↑", _("Move up"), lambda: self._move_profile(-1)),
+            ("↓", _("Move down"), lambda: self._move_profile(1)),
         ):
             b = QToolButton(text=text, clicked=slot)
             b.setToolTip(tip)
@@ -703,8 +723,8 @@ class MainWindow(QMainWindow):
         row.addStretch()
         lv.addLayout(row)
         row = QHBoxLayout()
-        row.addWidget(QPushButton("Importieren …", clicked=self._import_profile))
-        row.addWidget(QPushButton("Exportieren …", clicked=self._export_profile))
+        row.addWidget(QPushButton(_("Import …"), clicked=self._import_profile))
+        row.addWidget(QPushButton(_("Export …"), clicked=self._export_profile))
         lv.addLayout(row)
         splitter.addWidget(left)
 
@@ -721,47 +741,47 @@ class MainWindow(QMainWindow):
         splitter.setSizes([260, 760])
 
         # profile properties
-        box = QGroupBox("Profil")
+        box = QGroupBox(_("Profile"))
         form = _form(box)
         self.name_edit = QLineEdit()
         self.name_edit.textEdited.connect(self._profile_changed)
-        form.addRow("Name", self.name_edit)
+        form.addRow(_("Name"), self.name_edit)
         match_row = QHBoxLayout()
-        self.match_edit = QLineEdit(placeholderText="z. B. firefox, org.mozilla.firefox, firefox.exe")
-        self.match_edit.setToolTip("Kennungen der Anwendung, durch Komma getrennt. * und ? als Platzhalter.")
+        self.match_edit = QLineEdit(placeholderText=_("e.g. firefox, org.mozilla.firefox, firefox.exe"))
+        self.match_edit.setToolTip(_("Identifiers of the application, separated by commas. * and ? as wildcards."))
         self.match_edit.textEdited.connect(self._profile_changed)
-        self.capture_button = QPushButton("Aktives Fenster übernehmen", clicked=self._start_capture)
-        self.capture_button.setToolTip("Nach 3 Sekunden wird das dann aktive Fenster erkannt – vorher hinüberwechseln.")
+        self.capture_button = QPushButton(_("Use active window"), clicked=self._start_capture)
+        self.capture_button.setToolTip(_("Detects the active window after 3 seconds – switch to it before."))
         match_row.addWidget(self.match_edit, 1)
         match_row.addWidget(self.capture_button)
-        form.addRow("Erkennung", match_row)
-        self.title_edit = QLineEdit(placeholderText="optional, regulärer Ausdruck, z. B. YouTube")
+        form.addRow(_("Detection"), match_row)
+        self.title_edit = QLineEdit(placeholderText=_("optional, regular expression, e.g. YouTube"))
         self.title_edit.textEdited.connect(self._profile_changed)
-        form.addRow("Fenstertitel", self.title_edit)
-        self.default_check = QCheckBox("Standardprofil, wenn kein anderes passt")
+        form.addRow(_("Window title"), self.title_edit)
+        self.default_check = QCheckBox(_("Default profile when no other matches"))
         self.default_check.toggled.connect(self._profile_changed)
         form.addRow("", self.default_check)
         colors = QHBoxLayout()
-        self.profile_color = ColorButton("Standard")
+        self.profile_color = ColorButton(_("Default"))
         self.profile_color.changed.connect(self._profile_changed)
-        self.profile_text_color = ColorButton("Standard")
+        self.profile_text_color = ColorButton(_("Default"))
         self.profile_text_color.changed.connect(self._profile_changed)
-        colors.addWidget(QLabel("Hintergrund"))
+        colors.addWidget(QLabel(_("Background")))
         colors.addWidget(self.profile_color)
-        colors.addWidget(QLabel("Schrift"))
+        colors.addWidget(QLabel(_("Text")))
         colors.addWidget(self.profile_text_color)
         colors.addStretch()
-        form.addRow("Farben", colors)
-        self.profile_icon = IconPicker(self.config_dir, "automatisch (Icon der Anwendung)")
+        form.addRow(_("Colours"), colors)
+        self.profile_icon = IconPicker(self.config_dir, _("automatic (icon of the application)"))
         self.profile_icon.changed.connect(self._profile_changed)
-        form.addRow("Programmicon", self.profile_icon)
-        self.profile_font = FontCombo("aus den Einstellungen")
+        form.addRow(_("App icon"), self.profile_icon)
+        self.profile_font = FontCombo(_("from the settings"))
         self.profile_font.changed.connect(self._profile_changed)
-        form.addRow("Schriftart", self.profile_font)
+        form.addRow(_("Font"), self.profile_font)
         rv.addWidget(box)
 
         # deck preview
-        deck_box = QGroupBox("Deck  –  Taste anklicken zum Bearbeiten, ziehen zum Verschieben")
+        deck_box = QGroupBox(_("Deck  –  click a key to edit it, drag to move it"))
         dv = QVBoxLayout(deck_box)
         frame = QFrame()
         frame.setStyleSheet("background:#151515; border-radius:10px;")
@@ -791,66 +811,66 @@ class MainWindow(QMainWindow):
         nav.addWidget(self.prev_button)
         nav.addWidget(self.page_label)
         nav.addWidget(self.next_button)
-        nav.addWidget(QPushButton("Seite hinzufügen", clicked=self._add_page))
+        nav.addWidget(QPushButton(_("Add page"), clicked=self._add_page))
         nav.addSpacing(20)
-        self.preview_button = QPushButton("Vorschau auf dem Deck", checkable=True)
-        self.preview_button.setToolTip("Zeigt das bearbeitete Profil live auf dem Stream Deck (ohne Speichern).")
+        self.preview_button = QPushButton(_("Preview on the deck"), checkable=True)
+        self.preview_button.setToolTip(_("Shows the edited profile live on the Stream Deck (without saving)."))
         self.preview_button.toggled.connect(self._toggle_deck_preview)
         self.deck_preview.stopped.connect(lambda: self.preview_button.setChecked(False))
         nav.addWidget(self.preview_button)
         nav.addStretch()
         dv.addLayout(nav)
-        hint = QLabel("Bei mehr als 15 Tasten wird die Taste unten rechts zum Blättern.")
+        hint = QLabel(_("With more than 15 keys, the bottom right key turns the pages."))
         hint.setStyleSheet("color: gray;")
         hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
         dv.addWidget(hint)
         rv.addWidget(deck_box)
 
         # button editor
-        self.button_box = QGroupBox("Taste")
+        self.button_box = QGroupBox(_("Key"))
         bf = _form(self.button_box)
-        self.label_edit = QLineEdit(placeholderText="Beschriftung")
-        self.label_edit.setToolTip("Mit | markierst du, wo ein langes Wort getrennt werden darf, z. B. Seiten|leiste")
+        self.label_edit = QLineEdit(placeholderText=_("Label"))
+        self.label_edit.setToolTip(_("Mark with | where a long word may be hyphenated, e.g. Side|bar"))
         self.label_edit.textEdited.connect(self._button_changed)
-        bf.addRow("Beschriftung", self.label_edit)
-        self.keys_edit, keys_row = self._shortcut_row(KEYS_PLACEHOLDER)
-        bf.addRow("Kürzel", keys_row)
+        bf.addRow(_("Label"), self.label_edit)
+        self.keys_edit, keys_row = self._shortcut_row(_(KEYS_PLACEHOLDER))
+        bf.addRow(_("Shortcut"), keys_row)
         # per-system variants, for shortcuts that differ by more than Ctrl/Cmd
         self.variant_edits: dict[str, ShortcutEdit] = {}
         here = current_platform()
         for name, label in PLATFORM_LABELS.items():
-            edit, row = self._shortcut_row("wie oben", compact=True)
-            edit.setToolTip(f"Nur auf {label} statt des Kürzels oben senden, z. B. wenn das Programm "
-                            "dort eine ganz andere Taste nutzt")
+            edit, row = self._shortcut_row(_("same as above"), compact=True)
+            edit.setToolTip(_("Sent on {system} instead of the shortcut above, e.g. when the app uses "
+                              "a different key there").format(system=label))
             self.variant_edits[name] = edit
-            bf.addRow(f"  {label}" + (" (hier)" if name == here else ""), row)
+            bf.addRow("  " + (_("{system} (this one)").format(system=label) if name == here else label), row)
         self.keys_error = QLabel()
         self.keys_error.setStyleSheet("color: #e53935;")
         bf.addRow("", self.keys_error)
         bf.setRowVisible(self.keys_error, False)  # only takes room when there is an error
         self._button_form = bf
         colors = QHBoxLayout()
-        self.button_color = ColorButton("vom Profil")
+        self.button_color = ColorButton(_("from the profile"))
         self.button_color.changed.connect(self._button_changed)
-        self.button_text_color = ColorButton("vom Profil")
+        self.button_text_color = ColorButton(_("from the profile"))
         self.button_text_color.changed.connect(self._button_changed)
-        colors.addWidget(QLabel("Hintergrund"))
+        colors.addWidget(QLabel(_("Background")))
         colors.addWidget(self.button_color)
-        colors.addWidget(QLabel("Schrift"))
+        colors.addWidget(QLabel(_("Text")))
         colors.addWidget(self.button_text_color)
         colors.addStretch()
-        bf.addRow("Farben", colors)
+        bf.addRow(_("Colours"), colors)
         self.button_icon = IconPicker(self.config_dir)
         self.button_icon.changed.connect(self._button_changed)
-        bf.addRow("Symbol", self.button_icon)
+        bf.addRow(_("Image"), self.button_icon)
         size_row = QHBoxLayout()
-        self.font_size = QSpinBox(minimum=0, maximum=40, specialValueText="automatisch")
-        _compact(self.font_size).setMinimumWidth(130)  # room for "automatisch"
+        self.font_size = QSpinBox(minimum=0, maximum=40, specialValueText=_("automatic"))
+        _compact(self.font_size).setMinimumWidth(130)  # room for "automatic"
         self.font_size.valueChanged.connect(self._button_changed)
         size_row.addWidget(self.font_size)
         size_row.addStretch()
-        size_row.addWidget(QPushButton("Taste leeren", clicked=lambda: self._clear_tile(self._tile_of_slot())))
-        bf.addRow("Schriftgröße", size_row)
+        size_row.addWidget(QPushButton(_("Clear key"), clicked=lambda: self._clear_tile(self._tile_of_slot())))
+        bf.addRow(_("Font size"), size_row)
         rv.addWidget(self.button_box)
         rv.addStretch()
 
@@ -863,17 +883,17 @@ class MainWindow(QMainWindow):
         self.resize(width, height)
 
     def _build_menu(self) -> None:
-        menu = self.menuBar().addMenu("&Datei")
+        menu = self.menuBar().addMenu(_("&File"))
         for text, shortcut, slot in (
-            ("Speichern", QKeySequence.StandardKey.Save, self.save),
-            ("Neu laden", QKeySequence.StandardKey.Refresh, self._reload),
+            (_("Save"), QKeySequence.StandardKey.Save, self.save),
+            (_("Reload"), QKeySequence.StandardKey.Refresh, self._reload),
             (None, None, None),
-            ("Profil importieren …", "Ctrl+I", self._import_profile),
-            ("Profil exportieren …", "Ctrl+E", self._export_profile),
+            (_("Import profile …"), "Ctrl+I", self._import_profile),
+            (_("Export profile …"), "Ctrl+E", self._export_profile),
             (None, None, None),
-            ("Einstellungen …", "Ctrl+,", self._settings),
+            (_("Settings …"), "Ctrl+,", self._settings),
             (None, None, None),
-            ("Beenden", QKeySequence.StandardKey.Quit, self.close),
+            (_("Quit"), QKeySequence.StandardKey.Quit, self.close),
         ):
             if text is None:
                 menu.addSeparator()
@@ -931,7 +951,7 @@ class MainWindow(QMainWindow):
         try:
             self.data = read_config_data(self.path) if self.path.exists() else {"profiles": []}
         except ConfigError as e:
-            QMessageBox.critical(self, "Konfiguration", str(e))
+            QMessageBox.critical(self, _("Configuration"), str(e))
             self.data = {"profiles": []}
         self._known_mtime = self._file_mtime()
         self._external_change = False
@@ -949,10 +969,10 @@ class MainWindow(QMainWindow):
         if self.dirty:
             self._external_change = True
             self.statusBar().showMessage(
-                "Die Konfiguration wurde außerhalb des Editors geändert (z. B. über die Leiste).", 10000)
+                _("The configuration was changed outside the editor (e.g. from the tray menu)."), 10000)
         else:
             self.load(keep_selection=True)
-            self.statusBar().showMessage("Konfiguration wurde außerhalb geändert – neu geladen.", 5000)
+            self.statusBar().showMessage(_("The configuration was changed outside – reloaded."), 5000)
 
     def select_profile(self, name: str) -> None:
         for i, p in enumerate(self.profiles):
@@ -964,16 +984,16 @@ class MainWindow(QMainWindow):
         """New profile prefilled for the given application (from the tray menu)."""
         index = self._default_index()
         self.profiles.insert(index, {
-            "name": app_name or "Neues Profil",
+            "name": app_name or _("New profile"),
             "match": list(dict.fromkeys(i.lower() for i in ids)),
             "buttons": [],
         })
         self._refresh_profile_list(index)
         self._set_dirty()
-        self.statusBar().showMessage("Neues Profil angelegt – Tasten belegen und speichern.", 8000)
+        self.statusBar().showMessage(_("New profile created – assign keys and save."), 8000)
 
     def _reload(self) -> None:
-        if self.dirty and QMessageBox.question(self, "Neu laden", "Ungespeicherte Änderungen verwerfen?") \
+        if self.dirty and QMessageBox.question(self, _("Reload"), _("Discard unsaved changes?")) \
                 != QMessageBox.StandardButton.Yes:
             return
         self.load()
@@ -981,9 +1001,9 @@ class MainWindow(QMainWindow):
     def save(self) -> bool:
         if self._external_change or (self._known_mtime is not None and self._file_mtime() != self._known_mtime):
             answer = QMessageBox.question(
-                self, "Datei geändert",
-                "Die Konfiguration wurde inzwischen außerhalb des Editors geändert "
-                "(z. B. Helligkeit über die Leiste).\n\nMit dem Stand des Editors überschreiben?")
+                self, _("File changed"),
+                _("The configuration was changed outside the editor in the meantime "
+                  "(e.g. the brightness from the tray menu).\n\nOverwrite it with the editor's version?"))
             if answer != QMessageBox.StandardButton.Yes:
                 return False
         try:
@@ -991,20 +1011,20 @@ class MainWindow(QMainWindow):
             self._known_mtime = self._file_mtime()
             self._external_change = False
         except ConfigError as e:
-            QMessageBox.warning(self, "Nicht gespeichert", f"Die Konfiguration enthält Fehler:\n\n{e}")
+            QMessageBox.warning(self, _("Not saved"), _("The configuration has errors:\n\n{error}").format(error=e))
             return False
         except OSError as e:
-            QMessageBox.critical(self, "Nicht gespeichert", str(e))
+            QMessageBox.critical(self, _("Not saved"), str(e))
             return False
         self._set_dirty(False)
-        self.statusBar().showMessage("Gespeichert – das Deck übernimmt die Änderungen sofort.", 5000)
+        self.statusBar().showMessage(_("Saved – the deck picks up the changes right away."), 5000)
         return True
 
     def closeEvent(self, event) -> None:
         self.deck_preview.stop()
         if self.dirty:
             answer = QMessageBox.question(
-                self, "Beenden", "Änderungen speichern?",
+                self, _("Quit"), _("Save changes?"),
                 QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard
                 | QMessageBox.StandardButton.Cancel)
             if answer == QMessageBox.StandardButton.Cancel or (
@@ -1020,10 +1040,10 @@ class MainWindow(QMainWindow):
         self.profile_list.blockSignals(True)
         self.profile_list.clear()
         for p in self.profiles:
-            item = QListWidgetItem(p.get("name") or "(ohne Namen)")
+            item = QListWidgetItem(p.get("name") or _("(no name)"))
             if p.get("default"):
                 item.setText(item.text() + "  ★")
-                item.setToolTip("Standardprofil")
+                item.setToolTip(_("Default profile"))
             self.profile_list.addItem(item)
         self.profile_list.blockSignals(False)
         if self.profiles:
@@ -1082,7 +1102,7 @@ class MainWindow(QMainWindow):
         self._render_timer.start()
 
     def _add_profile(self) -> None:
-        self.profiles.insert(max(0, self._default_index()), {"name": "Neues Profil", "match": [], "buttons": []})
+        self.profiles.insert(max(0, self._default_index()), {"name": _("New profile"), "match": [], "buttons": []})
         self._refresh_profile_list(max(0, self._default_index() - 1))
         self._set_dirty()
         self.name_edit.setFocus()
@@ -1100,7 +1120,7 @@ class MainWindow(QMainWindow):
         if profile is None:
             return
         clone = copy.deepcopy(profile)
-        clone["name"] = f"{profile.get('name', '')} (Kopie)"
+        clone["name"] = _("{name} (copy)").format(name=profile.get("name", ""))
         clone["default"] = False
         row = self.profile_list.currentRow() + 1
         self.profiles.insert(row, clone)
@@ -1111,7 +1131,8 @@ class MainWindow(QMainWindow):
         profile = self.current_profile()
         if profile is None:
             return
-        if QMessageBox.question(self, "Profil löschen", f"Profil „{profile.get('name', '')}“ löschen?") \
+        if QMessageBox.question(self, _("Delete profile"),
+                                _("Delete profile “{name}”?").format(name=profile.get("name", ""))) \
                 != QMessageBox.StandardButton.Yes:
             return
         row = self.profile_list.currentRow()
@@ -1129,20 +1150,21 @@ class MainWindow(QMainWindow):
         self._set_dirty()
 
     def _import_profile(self) -> None:
-        file, _ = QFileDialog.getOpenFileName(self, "Profil importieren", str(Path.home()),
-                                              f"Stream-Deck-Profil (*{PROFILE_SUFFIX})")
+        file, _filter = QFileDialog.getOpenFileName(self, _("Import profile"), str(Path.home()),
+                                                    _("Daily Deck profile") + f" (*{PROFILE_SUFFIX})")
         if not file:
             return
         try:
             profile = import_profile(Path(file), self.config_dir())
         except (ConfigError, OSError) as e:
-            QMessageBox.warning(self, "Import fehlgeschlagen", str(e))
+            QMessageBox.warning(self, _("Import failed"), str(e))
             return
         names = {p.get("name") for p in self.profiles}
         if profile.get("name") in names:
             answer = QMessageBox.question(
-                self, "Profil existiert",
-                f"Es gibt bereits ein Profil „{profile['name']}“. Ersetzen?\n(Nein = als Kopie hinzufügen)",
+                self, _("Profile exists"),
+                _("There is already a profile “{name}”. Replace it?\n(No = add it as a copy)").format(
+                    name=profile["name"]),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel)
             if answer == QMessageBox.StandardButton.Cancel:
                 return
@@ -1153,22 +1175,23 @@ class MainWindow(QMainWindow):
                 self._refresh_profile_list(index)
                 self._set_dirty()
                 return
-            profile["name"] += " (importiert)"
+            profile["name"] = _("{name} (imported)").format(name=profile["name"])
         if profile.get("default") and any(p.get("default") for p in self.profiles):
             profile["default"] = False
         index = self._default_index()
         self.profiles.insert(index, profile)
         self._refresh_profile_list(index)
         self._set_dirty()
-        self.statusBar().showMessage(f"Profil „{profile.get('name')}“ importiert – zum Übernehmen speichern.", 6000)
+        self.statusBar().showMessage(
+            _("Profile “{name}” imported – save to apply it.").format(name=profile.get("name")), 6000)
 
     def _export_profile(self) -> None:
         profile = self.current_profile()
         if profile is None:
             return
-        suggestion = Path.home() / f"{profile.get('name') or 'profil'}{PROFILE_SUFFIX}"
-        file, _ = QFileDialog.getSaveFileName(self, "Profil exportieren", str(suggestion),
-                                              f"Stream-Deck-Profil (*{PROFILE_SUFFIX})")
+        suggestion = Path.home() / f"{profile.get('name') or 'profile'}{PROFILE_SUFFIX}"
+        file, _filter = QFileDialog.getSaveFileName(self, _("Export profile"), str(suggestion),
+                                                    _("Daily Deck profile") + f" (*{PROFILE_SUFFIX})")
         if not file:
             return
         target = Path(file)
@@ -1177,9 +1200,9 @@ class MainWindow(QMainWindow):
         try:
             export_profile(profile, self.config_dir(), target)
         except OSError as e:
-            QMessageBox.warning(self, "Export fehlgeschlagen", str(e))
+            QMessageBox.warning(self, _("Export failed"), str(e))
             return
-        self.statusBar().showMessage(f"Exportiert nach {target}", 6000)
+        self.statusBar().showMessage(_("Exported to {file}").format(file=target), 6000)
 
     def _settings(self) -> None:
         settings = self.data.setdefault("settings", {})
@@ -1197,16 +1220,16 @@ class MainWindow(QMainWindow):
     def _start_capture(self) -> None:
         self._countdown = 3
         self.capture_button.setEnabled(False)
-        self.capture_button.setText("Fenster wechseln … 3")
+        self.capture_button.setText(_("Switch windows … {seconds}").format(seconds=3))
         self._capture_timer.start()
 
     def _capture_tick(self) -> None:
         self._countdown -= 1
         if self._countdown > 0:
-            self.capture_button.setText(f"Fenster wechseln … {self._countdown}")
+            self.capture_button.setText(_("Switch windows … {seconds}").format(seconds=self._countdown))
             return
         self._capture_timer.stop()
-        self.capture_button.setText("Aktives Fenster übernehmen")
+        self.capture_button.setText(_("Use active window"))
         self.capture_button.setEnabled(True)
         try:
             if self._focus is None:
@@ -1215,24 +1238,26 @@ class MainWindow(QMainWindow):
                 self._focus = create_focus_provider(self._settings_obj().focus_backend)
             info = self._focus.get()
         except Exception as e:  # noqa: BLE001
-            QMessageBox.warning(self, "Fenster erkennen", f"Das aktive Fenster ließ sich nicht ermitteln:\n{e}")
+            QMessageBox.warning(self, _("Detect window"),
+                                _("Could not determine the active window:\n{error}").format(error=e))
             return
         self.raise_()
         self.activateWindow()
         if info.empty:
-            self.statusBar().showMessage("Kein Fenster erkannt.", 5000)
+            self.statusBar().showMessage(_("No window detected."), 5000)
             return
         if info.pid == os.getpid():
-            self.statusBar().showMessage("Das war der Editor selbst – bitte innerhalb von 3 s wechseln.", 6000)
+            self.statusBar().showMessage(_("That was the editor itself – please switch within 3 s."), 6000)
             return
         current = [m.strip() for m in self.match_edit.text().split(",") if m.strip()]
         lower = {m.lower() for m in current}
         current += [i.lower() for i in info.ids if i.lower() not in lower]
         self.match_edit.setText(", ".join(dict.fromkeys(current)))
-        if self.name_edit.text().strip() in ("", "Neues Profil"):
+        if self.name_edit.text().strip() in ("", _("New profile")):
             self.name_edit.setText(info.display_name)
         self._profile_changed()
-        self.statusBar().showMessage(f"Erkannt: {info.display_name}  ({', '.join(info.ids)})", 8000)
+        self.statusBar().showMessage(
+            _("Detected: {app}  ({ids})").format(app=info.display_name, ids=", ".join(info.ids)), 8000)
 
     # --- deck preview ---------------------------------------------------------
 
@@ -1249,7 +1274,7 @@ class MainWindow(QMainWindow):
         return page * per + tile
 
     def _tile_of_slot(self) -> int:
-        per, _, page = self._page_info()
+        per, _pages, page = self._page_info()
         return (self.slot or 0) - page * per
 
     def _render_deck(self) -> None:
@@ -1283,9 +1308,9 @@ class MainWindow(QMainWindow):
             tile.setPixmap(to_pixmap(image))
             tile.movable = not isinstance(slots[i], NavSlot)
             flat = page * per + i
-            tile.setToolTip("Fehler im Kürzel" if flat in errors else "")
+            tile.setToolTip(_("Error in the shortcut") if flat in errors else "")
             tile.set_selected(self.slot is not None and flat == self.slot and not isinstance(slots[i], NavSlot))
-        self.page_label.setText(f"Seite {page + 1} / {pages}")
+        self.page_label.setText(_("Page {page} / {pages}").format(page=page + 1, pages=pages))
         self._push_deck_preview()
         self.prev_button.setEnabled(page > 0)
         self.next_button.setEnabled(page < pages - 1)
@@ -1310,7 +1335,7 @@ class MainWindow(QMainWindow):
             self.deck_preview.start(*self._preview_args())
         elif not on and self.deck_preview.active:
             self.deck_preview.stop()
-            self.statusBar().showMessage("Vorschau beendet.", 4000)
+            self.statusBar().showMessage(_("Preview ended."), 4000)
 
     def _push_deck_preview(self) -> None:
         if self.deck_preview.active:
@@ -1326,7 +1351,7 @@ class MainWindow(QMainWindow):
         if self.current_profile() is None:
             return
         buttons = self.current_buttons()
-        _, pages, _ = self._page_info()
+        _per, pages, _page = self._page_info()
         target = (KEY_COUNT - 1) * (pages if len(buttons) > KEY_COUNT else 1) + 1
         while len(buttons) < target:
             buttons.append({})
@@ -1376,8 +1401,8 @@ class MainWindow(QMainWindow):
     def _load_button(self) -> None:
         button = self.current_button() if self.slot is not None else None
         self.button_box.setEnabled(button is not None)
-        self.button_box.setTitle(f"Taste {self._tile_of_slot() + 1}" if button is not None else
-                                 "Taste  –  oben eine Taste anklicken")
+        self.button_box.setTitle(_("Key {number}").format(number=self._tile_of_slot() + 1) if button is not None
+                                 else _("Key  –  click a key above"))
         b = button or {}
         self._loading = True
         self.keys_edit.stop_recording()
@@ -1435,10 +1460,10 @@ class MainWindow(QMainWindow):
         edit = ShortcutEdit()
         edit.setPlaceholderText(placeholder)
         edit.textChanged.connect(self._button_changed)
-        idle = "⏺" if compact else "⏺ Aufnehmen"
+        idle = "⏺" if compact else "⏺ " + _("Record")
         button = QPushButton(idle, clicked=lambda: edit.stop_recording() if edit.recording else edit.start_recording())
-        button.setToolTip("Tastenkombination aufnehmen")
-        edit.recordingChanged.connect(lambda on: button.setText(("■" if compact else "■ Fertig") if on else idle))
+        button.setToolTip(_("Record a key combination"))
+        edit.recordingChanged.connect(lambda on: button.setText(("■" if compact else "■ " + _("Done")) if on else idle))
         row = QHBoxLayout()
         row.addWidget(edit, 1)
         row.addWidget(button)
@@ -1446,6 +1471,7 @@ class MainWindow(QMainWindow):
 
 
 def main(config_path: Path | None = None) -> int:
+    setup_language(config_path)
     app = QApplication.instance() or QApplication(sys.argv)
     app.setApplicationName("Daily Deck Profile")
     from .tray import app_icon, install_translations

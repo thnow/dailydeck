@@ -11,9 +11,10 @@ from PySide6.QtCore import QLibraryInfo, QLockFile, QObject, QPointF, QRectF, Qt
 from PySide6.QtGui import QAction, QActionGroup, QColor, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QSystemTrayIcon
 
-from . import autostart, integration
+from . import autostart, i18n, integration
 from .app import Daemon, DaemonStatus
-from .config import DATA_DIR, ConfigError, default_config_path, parse_settings, read_config_data
+from .config import DATA_DIR, ConfigError, default_config_path, parse_settings, read_config_data, setup_language
+from .i18n import _
 from .preview import runtime_dir
 from .profile_io import save_config
 
@@ -101,46 +102,46 @@ class TrayApp(QObject):
         self.status_action = m.addAction("")
         self.status_action.setEnabled(False)
         m.addSeparator()
-        self.edit_profile_action = m.addAction("Profil bearbeiten …", self._edit_current_profile)
-        m.addAction("Editor öffnen …", lambda: self.open_editor())
+        self.edit_profile_action = m.addAction(_("Edit profile …"), self._edit_current_profile)
+        m.addAction(_("Open editor …"), lambda: self.open_editor())
         m.addSeparator()
 
-        self.pause_action = QAction("Pausieren", m, checkable=True)
+        self.pause_action = QAction(_("Pause"), m, checkable=True)
         self.pause_action.toggled.connect(self.daemon.set_paused)
         m.addAction(self.pause_action)
-        self.pin_menu = m.addMenu("Profil festhalten")
+        self.pin_menu = m.addMenu(_("Pin profile"))
         self.pin_group = QActionGroup(self.pin_menu)
         self.pin_group.setExclusive(True)
         m.addSeparator()
 
-        self.brightness_menu = m.addMenu("Helligkeit")
+        self.brightness_menu = m.addMenu(_("Brightness"))
         self.brightness_group = QActionGroup(self.brightness_menu)
         for value in BRIGHTNESS_STEPS:
             action = QAction(f"{value} %", self.brightness_menu, checkable=True)
             action.setData(value)
-            action.triggered.connect(lambda _=False, v=value: self._set_setting("brightness", v))
+            action.triggered.connect(lambda _checked=False, v=value: self._set_setting("brightness", v))
             self.brightness_group.addAction(action)
             self.brightness_menu.addAction(action)
-        self.app_icon_action = QAction("Programmicon einblenden", m, checkable=True)
+        self.app_icon_action = QAction(_("Show app icon"), m, checkable=True)
         self.app_icon_action.triggered.connect(lambda on: self._set_setting("app_icon", on))
         m.addAction(self.app_icon_action)
-        self.show_keys_action = QAction("Kürzel auf den Tasten anzeigen", m, checkable=True)
+        self.show_keys_action = QAction(_("Show shortcuts on the keys"), m, checkable=True)
         self.show_keys_action.triggered.connect(lambda on: self._set_setting("show_keys", on))
         m.addAction(self.show_keys_action)
         m.addSeparator()
 
-        self.autostart_action = QAction("Beim Anmelden starten", m, checkable=True)
+        self.autostart_action = QAction(_("Start at login"), m, checkable=True)
         self.autostart_action.setChecked(autostart.is_enabled())
         self.autostart_action.triggered.connect(self._set_autostart)
         m.addAction(self.autostart_action)
-        m.addAction("Beenden", self.quit)
+        m.addAction(_("Quit"), self.quit)
         self.tray.setContextMenu(m)
 
     def _rebuild_pin_menu(self, names: tuple[str, ...]) -> None:
         self.pin_menu.clear()
         for action in self.pin_group.actions():
             self.pin_group.removeAction(action)
-        auto = QAction("Automatisch (aktives Fenster)", self.pin_menu, checkable=True)
+        auto = QAction(_("Automatic (active window)"), self.pin_menu, checkable=True)
         auto.setData(None)
         self.pin_group.addAction(auto)
         self.pin_menu.addAction(auto)
@@ -151,7 +152,7 @@ class TrayApp(QObject):
             self.pin_group.addAction(action)
             self.pin_menu.addAction(action)
         for action in self.pin_group.actions():
-            action.triggered.connect(lambda _=False, a=action: self.daemon.set_pinned(a.data()))
+            action.triggered.connect(lambda _checked=False, a=action: self.daemon.set_pinned(a.data()))
         self._profile_names = names
 
     def refresh(self) -> None:
@@ -161,25 +162,25 @@ class TrayApp(QObject):
         self._last = st
 
         if st.error:
-            line = f"Fehler: {st.error}"
+            line = _("Error: {error}").format(error=st.error)
         elif not st.connected:
-            line = "Kein Stream Deck verbunden"
+            line = _("No Stream Deck connected")
         elif st.paused:
-            line = "Pausiert"
+            line = _("Paused")
         elif st.previewing:
-            line = "Vorschau aus dem Editor"
+            line = _("Preview from the editor")
         elif st.pinned:
-            line = f"Festgehalten: {st.pinned}"
+            line = _("Pinned: {profile}").format(profile=st.pinned)
         else:
-            line = f"Profil: {st.profile or '–'}"
+            line = _("Profile: {profile}").format(profile=st.profile or "–")
         self.status_action.setText(line)
         self.header.setText(st.app_name or "Daily Deck")
         self.header.setIcon(QIcon(str(st.icon)) if st.icon else QIcon())
         self.tray.setToolTip(f"Daily Deck – {line}")
         self.tray.setIcon(self._icons[not st.connected or st.paused])
 
-        self.edit_profile_action.setText(f"Profil „{st.profile}“ bearbeiten …" if st.profile
-                                         else "Profil für dieses Programm anlegen …")
+        self.edit_profile_action.setText(_("Edit profile “{profile}” …").format(profile=st.profile) if st.profile
+                                         else _("Create a profile for this app …"))
         if self.pause_action.isChecked() != st.paused:
             self.pause_action.blockSignals(True)
             self.pause_action.setChecked(st.paused)
@@ -215,7 +216,7 @@ class TrayApp(QObject):
             data.setdefault("settings", {})[key] = value
             save_config(data, self.config_path)
         except (ConfigError, OSError) as e:
-            self.tray.showMessage("Daily Deck", f"Einstellung nicht gespeichert: {e}",
+            self.tray.showMessage("Daily Deck", _("Setting not saved: {error}").format(error=e),
                                   QSystemTrayIcon.MessageIcon.Warning)
         self._last = None  # force refresh of check marks
         self.refresh()
@@ -224,7 +225,7 @@ class TrayApp(QObject):
         try:
             autostart.set_enabled(on)
         except OSError as e:
-            self.tray.showMessage("Daily Deck", f"Autostart nicht geändert: {e}",
+            self.tray.showMessage("Daily Deck", _("Start at login not changed: {error}").format(error=e),
                                   QSystemTrayIcon.MessageIcon.Warning)
         self.autostart_action.setChecked(autostart.is_enabled())
 
@@ -278,9 +279,9 @@ def check_desktop_integration(tray: TrayApp) -> None:
     if uuid and not active:
         answer = QMessageBox.question(
             None, "Daily Deck",
-            "Damit das Daily-Deck-Symbol in der oberen Leiste erscheint, muss die GNOME-Erweiterung "
-            "„AppIndicator“ aktiviert werden.\n\nJetzt aktivieren? (Danach erscheinen dort auch die "
-            "Symbole anderer Programme, die so etwas anbieten.)")
+            _("For the Daily Deck icon to appear in the top bar, the GNOME extension “AppIndicator” "
+              "has to be enabled.\n\nEnable it now? (Icons of other apps that offer one will then "
+              "appear there as well.)"))
         if answer == QMessageBox.StandardButton.Yes:
             integration.enable_extension(uuid)
             # register again with the new StatusNotifier host
@@ -288,9 +289,9 @@ def check_desktop_integration(tray: TrayApp) -> None:
     elif not uuid:
         QMessageBox.information(
             None, "Daily Deck",
-            "Für das Symbol in der oberen Leiste fehlt eine AppIndicator-Erweiterung für GNOME "
-            "(Paket „gnome-shell-extension-appindicator“). Das Stream Deck funktioniert trotzdem; "
-            "Einstellungen gibt es dann im Editor.")
+            _("The icon in the top bar needs an AppIndicator extension for GNOME (package "
+              "“gnome-shell-extension-appindicator”). The Stream Deck works anyway; settings are "
+              "then available in the editor."))
 
 
 def _notify(tray: TrayApp, message: str) -> None:
@@ -301,13 +302,18 @@ def _notify(tray: TrayApp, message: str) -> None:
 
 
 def install_translations(app: QApplication) -> None:
-    """German texts for Qt's own buttons and dialogs (Abbrechen, Ja, Nein …), matching the rest of the UI."""
+    """Qt's own buttons and dialogs (Cancel, Yes, No …) in the language of the rest of the UI."""
+    lang = i18n.language()
+    if lang == i18n.SOURCE_LANGUAGE:
+        return
     translator = QTranslator(app)
-    if translator.load("qtbase_de", QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)):
+    folder = QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)
+    if translator.load(f"qtbase_{lang}", folder) or translator.load(f"qtbase_{lang.split('_')[0]}", folder):
         app.installTranslator(translator)
 
 
 def main(config_path: Path | None = None) -> int:
+    setup_language(config_path)
     if not logging.getLogger().handlers:
         logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
                             datefmt="%H:%M:%S")
@@ -322,7 +328,8 @@ def main(config_path: Path | None = None) -> int:
     lock = QLockFile(str(runtime_dir() / "tray.lock"))
     lock.setStaleLockTime(0)
     if not lock.tryLock(100):
-        QMessageBox.information(None, "Daily Deck", "Daily Deck läuft bereits (Symbol in der Leiste).")
+        QMessageBox.information(None, "Daily Deck",
+                                _("Daily Deck is already running (icon in the menu bar or tray)."))
         return 0
 
     path = (config_path or default_config_path()).expanduser().resolve()

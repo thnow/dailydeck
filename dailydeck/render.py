@@ -9,6 +9,7 @@ from PIL import Image, ImageColor, ImageDraw, ImageEnhance, ImageFont, ImageOps
 
 from .appicons import load_icon
 from .fonts import ResolvedFont, resolve_font
+from .i18n import _
 
 log = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ DEFAULT_FONT_NAMES = {"linux": "DejaVu Sans Bold", "win32": "Segoe UI Bold", "da
 def default_font_name() -> str:
     """What the built-in font is called on this system, for the settings dialog."""
     platform = "linux" if sys.platform.startswith("linux") else sys.platform
-    return DEFAULT_FONT_NAMES.get(platform, "Systemschrift")
+    return DEFAULT_FONT_NAMES.get(platform) or _("system font")
 
 
 @functools.cache

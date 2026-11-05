@@ -7,7 +7,8 @@ from PyInstaller.utils.hooks import collect_data_files
 version = os.environ["DAILYDECK_VERSION"]
 here = os.path.dirname(os.path.abspath(SPEC))  # noqa: F821 - defined by PyInstaller
 
-datas = [(src, dst) for src, dst in collect_data_files("dailydeck") if "gnome-extension" not in src]
+datas = [(src, dst) for src, dst in collect_data_files("dailydeck")
+         if "gnome-extension" not in src and not src.endswith(".pot")]
 
 a = Analysis(  # noqa: F821
     [os.path.join(here, "entry.py")],

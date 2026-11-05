@@ -18,14 +18,15 @@ import Quartz as Q
 from AppKit import NSEvent
 from Foundation import NSOperationQueue
 
+from ..i18n import N_, _
 from .base import KeySender
 from .parse import Chord
 
 log = logging.getLogger(__name__)
 
-ACCESSIBILITY_HINT = (
-    "Daily Deck darf keine Tastendrücke senden. Freigabe erteilen unter Systemeinstellungen → "
-    "Datenschutz & Sicherheit → Bedienungshilfen (für die App bzw. das Terminal, aus dem sie läuft)."
+ACCESSIBILITY_HINT = N_(
+    "Daily Deck may not send key presses. Allow it under System Settings → Privacy & Security → "
+    "Accessibility (for the app, or the terminal it runs from)."
 )
 
 
@@ -190,7 +191,7 @@ class QuartzKeySender(KeySender):
         self._layout.refresh()
         self._trusted = accessibility_trusted(prompt=True)
         if not self._trusted:
-            log.warning(ACCESSIBILITY_HINT)
+            log.warning(_(ACCESSIBILITY_HINT))
 
     def resolve(self, chord: Chord) -> tuple[list[str], int | None]:
         """(modifiers to hold, key code) – key code None for modifier-only chords."""
@@ -234,7 +235,7 @@ class QuartzKeySender(KeySender):
         if not self._trusted:
             self._trusted = accessibility_trusted()
             if not self._trusted:
-                log.warning(ACCESSIBILITY_HINT)
+                log.warning(_(ACCESSIBILITY_HINT))
                 return
         self._layout.refresh()
         for chord in chords:

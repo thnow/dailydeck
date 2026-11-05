@@ -15,6 +15,7 @@ import subprocess
 from pathlib import Path
 
 from .config import DATA_DIR
+from .i18n import _
 
 log = logging.getLogger(__name__)
 
@@ -50,7 +51,7 @@ def extension_state(uuid: str) -> str | None:
     if result is None or result.returncode != 0:
         return None
     for line in result.stdout.splitlines():
-        key, _, value = line.strip().partition(":")
+        key, _sep, value = line.strip().partition(":")
         if key == "State":
             return value.strip().upper()
     return None
@@ -110,15 +111,15 @@ def ensure_focus_extension() -> str | None:
         try:
             updated = _install_user_copy()
         except OSError as e:
-            return f"Die GNOME-Erweiterung zur Fenstererkennung konnte nicht installiert werden: {e}"
+            return _("The GNOME extension for window detection could not be installed: {error}").format(error=e)
     state = extension_state(FOCUS_EXTENSION)
     if state == "ACTIVE" and not updated:
         return None
     enable_extension(FOCUS_EXTENSION)
     if extension_state(FOCUS_EXTENSION) == "ACTIVE" and not updated:
         return None
-    return ("Die Fenstererkennung für GNOME wurde eingerichtet. Sie ist nach dem nächsten Ab- und "
-            "Anmelden aktiv – bis dahin zeigt das Deck nur das Standardprofil.")
+    return _("Window detection for GNOME has been set up. It becomes active after logging out and "
+             "in again – until then the deck only shows the default profile.")
 
 
 def appindicator_extension() -> tuple[str | None, bool]:

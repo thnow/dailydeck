@@ -12,6 +12,7 @@ from StreamDeck.Transport.Transport import TransportError
 from .appicons import find_app_icon
 from .config import Config, ConfigError, Profile, load_config
 from .focus import FocusUnavailable, WindowInfo, create_focus_provider
+from .i18n import _
 from .keys import KeySender, create_key_sender, format_shortcut
 from .layout import NavSlot, backdrop_tiles, icon_for, page_slots, render_slot
 from .preview import PreviewWatcher
@@ -168,7 +169,7 @@ class DeckController:
         tile = self._tiles[key] if self._tiles else None
         if self.profile is None and key == 0 and self.window.display_name:
             image = render_key(
-                self._key_size, label=self.window.display_name, hint="kein Profil",
+                self._key_size, label=self.window.display_name, hint=_("no profile"),
                 background="#000000", text_color="#808080", font=s.font, font_size=12,
                 backdrop=tile, backdrop_brightness=s.app_icon_brightness, opacity=s.button_opacity,
             )

@@ -85,7 +85,7 @@ def bump(new: str) -> int:
     if "## [Unreleased]" in log:
         log = log.replace("## [Unreleased]", f"## [Unreleased]\n\n## [{new}] – {today}", 1)
     CHANGELOG.write_text(log, encoding="utf-8")
-    print(f"Version {new} gesetzt. Jetzt CHANGELOG.md prüfen, committen und taggen: git tag v{new}")
+    print(f"Version {new} set. Now review CHANGELOG.md, commit and tag: git tag v{new}")
     return check(None)
 
 

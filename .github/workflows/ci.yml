@@ -27,6 +27,8 @@ jobs:
         run: pip install -e ".[dev]"
       - name: Versions consistent
         run: python scripts/version.py check
+      - name: Translations in sync
+        run: python scripts/i18n.py check
       - name: Ruff
         run: ruff check .
       - name: Tests
