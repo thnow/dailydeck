@@ -1,5 +1,6 @@
 import fnmatch
 import hashlib
+import json
 import os
 import re
 import shutil
@@ -9,6 +10,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .focus import WindowInfo
+from .i18n import _, pgettext
 from .keys import Chord, ShortcutError, parse_shortcut
 
 
@@ -70,6 +72,7 @@ class Settings:
     app_icon_flash: float = 0.6  # seconds at full brightness after a switch, 0 = off
     button_opacity: float = 0.35  # button colour over the icon, 0..1
     key_spacing: int = 36  # gap between keys in pixels, so the icon looks continuous
+    language: str = "auto"  # "auto" = system language, or a code such as "de"
 
 
 @dataclass
@@ -105,7 +108,22 @@ def config_dir() -> Path:
 # arrive on every machine; edited configs are never touched.
 PREVIOUS_DEFAULTS = {
     "c19dadc531305b2557a9fb0f4071ffda5a65c5d58c88be2677337bedf0d425c7",  # 0.1.0
+    "dafb558315d12afee0edc866d402c51b9aefcdf72619830a837679458530235f",  # 0.2.0
 }
+# From 0.3 on the default is written translated (localized_default_config); when it changes,
+# add the hash of its rendering in every language here.
+SOFT_HYPHEN = "\u00ad"
+_NAME_OR_LABEL = re.compile(r'^(\s*(?:name|label)\s*=\s*)"((?:[^"\\]|\\.)*)"', re.M)
+
+
+def localized_default_config() -> str:
+    """The bundled default config with profile names and labels in the current language."""
+    def translate(m: re.Match) -> str:
+        value = json.loads(f'"{m.group(2)}"')  # TOML basic strings use JSON's escapes
+        text = pgettext("default config", value.replace(SOFT_HYPHEN, "|")).replace("|", SOFT_HYPHEN)
+        return m.group(1) + json.dumps(text, ensure_ascii=False)
+
+    return _NAME_OR_LABEL.sub(translate, (DATA_DIR / "default_config.toml").read_text(encoding="utf-8"))
 
 
 def _content_hash(path: Path) -> str:
@@ -113,12 +131,13 @@ def _content_hash(path: Path) -> str:
 
 
 def default_config_path() -> Path:
-    """The user's config file; created from (or updated to) the bundled default."""
+    """The user's config file; created from (or updated to) the bundled default.
+
+    Call ``setup_language`` first, so a new file gets the user's language."""
     user = config_dir() / "config.toml"
-    bundled = DATA_DIR / "default_config.toml"
     if not user.exists():
         user.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(bundled, user)
+        user.write_text(localized_default_config(), encoding="utf-8", newline="\n")
     else:
         try:
             outdated = _content_hash(user) in PREVIOUS_DEFAULTS
@@ -126,8 +145,15 @@ def default_config_path() -> Path:
             outdated = False
         if outdated:
             shutil.copy2(user, user.with_name(user.name + ".bak"))
-            shutil.copyfile(bundled, user)
+            user.write_text(localized_default_config(), encoding="utf-8", newline="\n")
     return user
+
+
+def setup_language(config_path: Path | None = None) -> str:
+    """Activates the language from the config's settings (or the system's)."""
+    from . import i18n
+
+    return i18n.setup_from_config(config_path or config_dir() / "config.toml")
 
 
 def read_config_data(path: Path) -> dict:
@@ -135,7 +161,7 @@ def read_config_data(path: Path) -> dict:
         with open(path, "rb") as f:
             return tomllib.load(f)
     except OSError as e:
-        raise ConfigError(f"cannot read {path}: {e}") from e
+        raise ConfigError(_("cannot read {file}: {error}").format(file=path, error=e)) from e
     except tomllib.TOMLDecodeError as e:
         raise ConfigError(f"{path}: {e}") from e
 
@@ -163,6 +189,7 @@ def parse_settings(data: dict) -> Settings:
         app_icon_flash=float(s.get("app_icon_flash", Settings.app_icon_flash)),
         button_opacity=float(s.get("button_opacity", Settings.button_opacity)),
         key_spacing=int(s.get("key_spacing", Settings.key_spacing)),
+        language=str(s.get("language", Settings.language)),
     )
     return settings
 
@@ -186,13 +213,15 @@ def load_profile(data: dict, index: int, base_dir: Path) -> Profile:
     try:
         title_re = re.compile(title, re.IGNORECASE) if title else None
     except re.error as e:
-        raise ConfigError(f"profile {name!r}: invalid title regex: {e}") from e
+        raise ConfigError(_("profile “{name}”: invalid window title expression: {error}").format(
+            name=name, error=e)) from e
     buttons = []
     for j, b in enumerate(data.get("buttons", [])):
         try:
             buttons.append(load_button(b, base_dir))
         except ShortcutError as e:
-            raise ConfigError(f"profile {name!r}, button {j + 1} ({b.get('label', '')!r}): {e}") from e
+            raise ConfigError(_("profile “{name}”, key {number} (“{label}”): {error}").format(
+                name=name, number=j + 1, label=b.get("label", ""), error=e)) from e
     return Profile(
         name=name,
         match=tuple(m.lower() for m in match),

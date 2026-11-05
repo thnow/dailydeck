@@ -9,6 +9,8 @@ keys in ``NAMED_KEYS``.
 import sys
 from dataclasses import dataclass
 
+from ..i18n import _
+
 MODIFIER_ALIASES = {
     "ctrl": "ctrl", "control": "ctrl", "strg": "ctrl", "ctl": "ctrl",
     "shift": "shift", "umschalt": "shift",
@@ -119,14 +121,14 @@ def parse_chord(text: str, platform: str | None = None) -> Chord:
     else:
         parts = text.split("+")
     if any(p == "" for p in parts):
-        raise ShortcutError(f"empty key in {text!r}")
+        raise ShortcutError(_("empty key in “{shortcut}”").format(shortcut=text))
 
     *mod_parts, key_part = parts
     modifiers = set()
     for part in mod_parts:
         mod = _modifier(part, platform)
         if mod is None:
-            raise ShortcutError(f"unknown modifier {part!r} in {text!r}")
+            raise ShortcutError(_("unknown modifier “{modifier}” in “{shortcut}”").format(modifier=part, shortcut=text))
         modifiers.add(mod)
 
     lower = key_part.lower()
@@ -140,14 +142,14 @@ def parse_chord(text: str, platform: str | None = None) -> Chord:
     if (mod := _modifier(lower, platform)) is not None:
         # modifiers only, e.g. "super" to open the GNOME overview
         return Chord(frozenset(modifiers | {mod}), "", False)
-    raise ShortcutError(f"unknown key {key_part!r} in {text!r}")
+    raise ShortcutError(_("unknown key “{key}” in “{shortcut}”").format(key=key_part, shortcut=text))
 
 
 def parse_shortcut(text: str, platform: str | None = None) -> tuple[Chord, ...]:
     """``platform`` (a ``sys.platform`` value) decides what ``primary`` means; default: this system."""
     chords = tuple(parse_chord(part, platform) for part in text.split())
     if not chords:
-        raise ShortcutError("empty shortcut")
+        raise ShortcutError(_("empty shortcut"))
     return chords
 
 

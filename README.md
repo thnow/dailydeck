@@ -38,6 +38,9 @@ nicht gleichzeitig laufen. Selbst bauen: [docs/MACOS.md](docs/MACOS.md).
 
 Releases, weitere Plattformen und die Build-Pipeline: [docs/RELEASING.md](docs/RELEASING.md).
 
+**Sprachen:** Englisch und Deutsch, folgt der Systemsprache (Einstellungen → Sprache). Weitere
+Sprachen sind willkommen: [docs/TRANSLATING.md](docs/TRANSLATING.md).
+
 ### Entwicklung
 
 ```bash

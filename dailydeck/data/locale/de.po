@@ -1,0 +1,1135 @@
+# Deutsch translation of Daily Deck – see docs/TRANSLATING.md
+msgid ""
+msgstr ""
+"Project-Id-Version: dailydeck\n"
+"Report-Msgid-Bugs-To: https://github.com/thnow/dailydeck/issues\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Language-Name: Deutsch\n"
+
+#: dailydeck/__main__.py dailydeck/tray.py
+#, python-brace-format
+msgid "Error: {error}"
+msgstr "Fehler: {error}"
+
+#: dailydeck/__main__.py
+msgid "Switch between windows; Ctrl+C quits."
+msgstr "Wechsle zwischen Fenstern; Strg+C beendet."
+
+#: dailydeck/app.py
+msgid "no profile"
+msgstr "kein Profil"
+
+#: dailydeck/config.py
+#, python-brace-format
+msgid "cannot read {file}: {error}"
+msgstr "{file} lässt sich nicht lesen: {error}"
+
+#: dailydeck/config.py
+#, python-brace-format
+msgid "profile “{name}”, key {number} (“{label}”): {error}"
+msgstr "Profil „{name}“, Taste {number} („{label}“): {error}"
+
+#: dailydeck/config.py
+#, python-brace-format
+msgid "profile “{name}”: invalid window title expression: {error}"
+msgstr "Profil „{name}“: ungültiger Ausdruck für den Fenstertitel: {error}"
+
+#: dailydeck/gui.py
+msgid "&File"
+msgstr "&Datei"
+
+#: dailydeck/gui.py
+msgid "(no name)"
+msgstr "(ohne Namen)"
+
+#: dailydeck/gui.py
+msgid "<b>Profiles</b> (first match wins)"
+msgstr "<b>Profile</b> (erstes passendes gewinnt)"
+
+#: dailydeck/gui.py
+msgid "Add page"
+msgstr "Seite hinzufügen"
+
+#: dailydeck/gui.py
+msgid "App icon"
+msgstr "Programmicon"
+
+#: dailydeck/gui.py
+msgid "Background"
+msgstr "Hintergrund"
+
+#: dailydeck/gui.py
+msgid "Choose colour"
+msgstr "Farbe wählen"
+
+#: dailydeck/gui.py
+msgid "Choose image"
+msgstr "Bild wählen"
+
+#: dailydeck/gui.py
+msgid "Choose …"
+msgstr "Wählen …"
+
+#: dailydeck/gui.py
+msgid "Clear key"
+msgstr "Taste leeren"
+
+#: dailydeck/gui.py
+msgid "Colours"
+msgstr "Farben"
+
+#: dailydeck/gui.py
+msgid "Configuration"
+msgstr "Konfiguration"
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid ""
+"Could not determine the active window:\n"
+"{error}"
+msgstr ""
+"Das aktive Fenster ließ sich nicht ermitteln:\n"
+"{error}"
+
+#: dailydeck/gui.py
+msgid "Daily Deck is not running – showing the preview on the deck directly."
+msgstr "Daily Deck läuft nicht – Vorschau direkt auf dem Deck."
+
+#: dailydeck/gui.py
+msgid "Daily Deck profile"
+msgstr "Daily-Deck-Profil"
+
+#: dailydeck/gui.py
+msgid "Deck  –  click a key to edit it, drag to move it"
+msgstr "Deck  –  Taste anklicken zum Bearbeiten, ziehen zum Verschieben"
+
+#: dailydeck/gui.py
+msgid "Deck brightness"
+msgstr "Helligkeit Deck"
+
+#: dailydeck/gui.py
+msgid "Default"
+msgstr "Standard"
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid "Default ({font})"
+msgstr "Standard ({font})"
+
+#: dailydeck/gui.py
+msgid "Default profile"
+msgstr "Standardprofil"
+
+#: dailydeck/gui.py
+msgid "Default profile when no other matches"
+msgstr "Standardprofil, wenn kein anderes passt"
+
+#: dailydeck/gui.py
+msgid "Delete profile"
+msgstr "Profil löschen"
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid "Delete profile “{name}”?"
+msgstr "Profil „{name}“ löschen?"
+
+#: dailydeck/gui.py
+msgid "Detect window"
+msgstr "Fenster erkennen"
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid "Detected: {app}  ({ids})"
+msgstr "Erkannt: {app}  ({ids})"
+
+#: dailydeck/gui.py
+msgid "Detection"
+msgstr "Erkennung"
+
+#: dailydeck/gui.py
+msgid "Detects the active window after 3 seconds – switch to it before."
+msgstr "Nach 3 Sekunden wird das dann aktive Fenster erkannt – vorher hinüberwechseln."
+
+#: dailydeck/gui.py
+msgid "Discard unsaved changes?"
+msgstr "Ungespeicherte Änderungen verwerfen?"
+
+#: dailydeck/gui.py
+msgid "Done"
+msgstr "Fertig"
+
+#: dailydeck/gui.py
+msgid "Duplicate profile"
+msgstr "Profil duplizieren"
+
+#: dailydeck/gui.py
+msgid "Error in the shortcut"
+msgstr "Fehler im Kürzel"
+
+#: dailydeck/gui.py
+msgid "Export failed"
+msgstr "Export fehlgeschlagen"
+
+#: dailydeck/gui.py
+msgid "Export profile"
+msgstr "Profil exportieren"
+
+#: dailydeck/gui.py
+msgid "Export profile …"
+msgstr "Profil exportieren …"
+
+#: dailydeck/gui.py
+msgid "Export …"
+msgstr "Exportieren …"
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid "Exported to {file}"
+msgstr "Exportiert nach {file}"
+
+#: dailydeck/gui.py
+msgid "File changed"
+msgstr "Datei geändert"
+
+#: dailydeck/gui.py
+msgid "Flash on switch"
+msgstr "Aufblitzen beim Wechsel"
+
+#: dailydeck/gui.py
+msgid "Font"
+msgstr "Schriftart"
+
+#: dailydeck/gui.py
+msgid "Font size"
+msgstr "Schriftgröße"
+
+#: dailydeck/gui.py
+msgid "Gap between the keys of the device, so the icon looks continuous"
+msgstr "Abstand zwischen den Tasten am Gerät, damit das Icon durchgehend wirkt"
+
+#: dailydeck/gui.py
+msgid "How long the icon lights up at full brightness after switching apps; 0 = off"
+msgstr "So lange leuchtet das Icon nach einem Programmwechsel in voller Helligkeit; 0 = aus"
+
+#: dailydeck/gui.py
+msgid "How much the key colour covers the icon"
+msgstr "Wie stark die Tastenfarbe das Icon überdeckt"
+
+#: dailydeck/gui.py
+msgid "Icon brightness"
+msgstr "Helligkeit Icon"
+
+#: dailydeck/gui.py
+msgid "Identifiers of the application, separated by commas. * and ? as wildcards."
+msgstr "Kennungen der Anwendung, durch Komma getrennt. * und ? als Platzhalter."
+
+#: dailydeck/gui.py
+msgid "Image"
+msgstr "Symbol"
+
+#: dailydeck/gui.py
+msgid "Images"
+msgstr "Bilder"
+
+#: dailydeck/gui.py
+msgid "Import failed"
+msgstr "Import fehlgeschlagen"
+
+#: dailydeck/gui.py
+msgid "Import profile"
+msgstr "Profil importieren"
+
+#: dailydeck/gui.py
+msgid "Import profile …"
+msgstr "Profil importieren …"
+
+#: dailydeck/gui.py
+msgid "Import …"
+msgstr "Importieren …"
+
+#: dailydeck/gui.py
+msgid "Key"
+msgstr "Taste"
+
+#: dailydeck/gui.py
+msgid "Key  –  click a key above"
+msgstr "Taste  –  oben eine Taste anklicken"
+
+#: dailydeck/gui.py
+msgid "Key opacity"
+msgstr "Deckkraft der Tasten"
+
+#: dailydeck/gui.py
+msgid "Key spacing on the device"
+msgstr "Tastenabstand am Gerät"
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid "Key {number}"
+msgstr "Taste {number}"
+
+#: dailydeck/gui.py
+msgid "Keys"
+msgstr "Tasten"
+
+#: dailydeck/gui.py
+msgid "Label"
+msgstr "Beschriftung"
+
+#: dailydeck/gui.py
+msgid "Language"
+msgstr "Sprache"
+
+#: dailydeck/gui.py
+msgid "Mark with | where a long word may be hyphenated, e.g. Side|bar"
+msgstr "Mit | markierst du, wo ein langes Wort getrennt werden darf, z. B. Seiten|leiste"
+
+#: dailydeck/gui.py
+msgid "Move down"
+msgstr "Nach unten"
+
+#: dailydeck/gui.py
+msgid "Move up"
+msgstr "Nach oben"
+
+#: dailydeck/gui.py
+msgid "Name"
+msgstr "Name"
+
+#: dailydeck/gui.py
+msgid "New profile"
+msgstr "Neues Profil"
+
+#: dailydeck/gui.py
+msgid "New profile created – assign keys and save."
+msgstr "Neues Profil angelegt – Tasten belegen und speichern."
+
+#: dailydeck/gui.py
+msgid "No Stream Deck found."
+msgstr "Kein Stream Deck gefunden."
+
+#: dailydeck/gui.py
+msgid "No window detected."
+msgstr "Kein Fenster erkannt."
+
+#: dailydeck/gui.py
+msgid "Not saved"
+msgstr "Nicht gespeichert"
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid "Page {page} / {pages}"
+msgstr "Seite {page} / {pages}"
+
+#: dailydeck/gui.py
+msgid "Press a key combination …"
+msgstr "Tastenkombination drücken …"
+
+#: dailydeck/gui.py
+msgid "Preview ended."
+msgstr "Vorschau beendet."
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid "Preview failed: {error}"
+msgstr "Vorschau fehlgeschlagen: {error}"
+
+#: dailydeck/gui.py
+msgid "Preview on the deck"
+msgstr "Vorschau auf dem Deck"
+
+#: dailydeck/gui.py
+msgid "Preview on the deck – keys do nothing meanwhile."
+msgstr "Vorschau auf dem Deck – Tasten lösen dabei nichts aus."
+
+#: dailydeck/gui.py
+msgid "Profile"
+msgstr "Profil"
+
+#: dailydeck/gui.py
+msgid "Profile exists"
+msgstr "Profil existiert"
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid "Profile “{name}” imported – save to apply it."
+msgstr "Profil „{name}“ importiert – zum Übernehmen speichern."
+
+#: dailydeck/gui.py dailydeck/tray.py
+msgid "Quit"
+msgstr "Beenden"
+
+#: dailydeck/gui.py
+msgid "Record"
+msgstr "Aufnehmen"
+
+#: dailydeck/gui.py
+msgid "Record a key combination"
+msgstr "Tastenkombination aufnehmen"
+
+#: dailydeck/gui.py
+msgid "Reload"
+msgstr "Neu laden"
+
+#: dailydeck/gui.py
+msgid "Reset"
+msgstr "Zurücksetzen"
+
+#: dailydeck/gui.py
+msgid "Save"
+msgstr "Speichern"
+
+#: dailydeck/gui.py
+msgid "Save changes?"
+msgstr "Änderungen speichern?"
+
+#: dailydeck/gui.py
+msgid "Saved – the deck picks up the changes right away."
+msgstr "Gespeichert – das Deck übernimmt die Änderungen sofort."
+
+#: dailydeck/gui.py
+msgid "Search fonts …"
+msgstr "Schrift suchen …"
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid "Sent on {system} instead of the shortcut above, e.g. when the app uses a different key there"
+msgstr "Nur auf {system} statt des Kürzels oben senden, z. B. wenn das Programm dort eine ganz andere Taste nutzt"
+
+#: dailydeck/gui.py
+msgid "Settings"
+msgstr "Einstellungen"
+
+#: dailydeck/gui.py
+msgid "Settings …"
+msgstr "Einstellungen …"
+
+#: dailydeck/gui.py
+msgid "Shortcut"
+msgstr "Kürzel"
+
+#: dailydeck/gui.py
+msgid "Show the icon of the app across all keys"
+msgstr "Icon des Programms über alle Tasten einblenden"
+
+#: dailydeck/gui.py
+msgid "Show the shortcut below the label"
+msgstr "Kürzel unter der Beschriftung anzeigen"
+
+#: dailydeck/gui.py
+msgid "Shows the edited profile live on the Stream Deck (without saving)."
+msgstr "Zeigt das bearbeitete Profil live auf dem Stream Deck (ohne Speichern)."
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid "Stream Deck not available: {error}"
+msgstr "Stream Deck nicht verfügbar: {error}"
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid "Switch windows … {seconds}"
+msgstr "Fenster wechseln … {seconds}"
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid "System language ({language})"
+msgstr "Systemsprache ({language})"
+
+#: dailydeck/gui.py
+msgid "Takes effect after restarting Daily Deck"
+msgstr "Wirkt nach einem Neustart von Daily Deck"
+
+#: dailydeck/gui.py
+msgid "Text"
+msgstr "Schrift"
+
+#: dailydeck/gui.py
+msgid "That was the editor itself – please switch within 3 s."
+msgstr "Das war der Editor selbst – bitte innerhalb von 3 s wechseln."
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid ""
+"The configuration has errors:\n"
+"\n"
+"{error}"
+msgstr ""
+"Die Konfiguration enthält Fehler:\n"
+"\n"
+"{error}"
+
+#: dailydeck/gui.py
+msgid "The configuration was changed outside the editor (e.g. from the tray menu)."
+msgstr "Die Konfiguration wurde außerhalb des Editors geändert (z. B. über die Leiste)."
+
+#: dailydeck/gui.py
+msgid ""
+"The configuration was changed outside the editor in the meantime (e.g. the brightness from the tray menu).\n"
+"\n"
+"Overwrite it with the editor's version?"
+msgstr ""
+"Die Konfiguration wurde inzwischen außerhalb des Editors geändert (z. B. Helligkeit über die Leiste).\n"
+"\n"
+"Mit dem Stand des Editors überschreiben?"
+
+#: dailydeck/gui.py
+msgid "The configuration was changed outside – reloaded."
+msgstr "Konfiguration wurde außerhalb geändert – neu geladen."
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid ""
+"There is already a profile “{name}”. Replace it?\n"
+"(No = add it as a copy)"
+msgstr ""
+"Es gibt bereits ein Profil „{name}“. Ersetzen?\n"
+"(Nein = als Kopie hinzufügen)"
+
+#: dailydeck/gui.py
+msgid "Use active window"
+msgstr "Aktives Fenster übernehmen"
+
+#: dailydeck/gui.py
+msgid "Window title"
+msgstr "Fenstertitel"
+
+#: dailydeck/gui.py
+msgid "With more than 15 keys, the bottom right key turns the pages."
+msgstr "Bei mehr als 15 Tasten wird die Taste unten rechts zum Blättern."
+
+#: dailydeck/gui.py
+msgid "automatic"
+msgstr "automatisch"
+
+#: dailydeck/gui.py
+msgid "automatic (icon of the application)"
+msgstr "automatisch (Icon der Anwendung)"
+
+#: dailydeck/gui.py
+msgid "e.g. firefox, org.mozilla.firefox, firefox.exe"
+msgstr "z. B. firefox, org.mozilla.firefox, firefox.exe"
+
+#: dailydeck/gui.py
+msgid "e.g. primary+shift+t (primary = Ctrl, ⌘ on the Mac)"
+msgstr "z. B. primary+shift+t (primary = Strg, auf dem Mac ⌘)"
+
+#: dailydeck/gui.py
+msgid "from the profile"
+msgstr "vom Profil"
+
+#: dailydeck/gui.py
+msgid "from the settings"
+msgstr "aus den Einstellungen"
+
+#: dailydeck/gui.py
+msgid "no image"
+msgstr "kein Bild"
+
+#: dailydeck/gui.py
+msgid "optional, regular expression, e.g. YouTube"
+msgstr "optional, regulärer Ausdruck, z. B. YouTube"
+
+#: dailydeck/gui.py
+msgid "same as above"
+msgstr "wie oben"
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid "{family} – {style} (not installed)"
+msgstr "{family} – {style} (nicht installiert)"
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid "{font} (not found)"
+msgstr "{font} (nicht gefunden)"
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid "{name} (copy)"
+msgstr "{name} (Kopie)"
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid "{name} (imported)"
+msgstr "{name} (importiert)"
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid "{system} (this one)"
+msgstr "{system} (hier)"
+
+#: dailydeck/integration.py
+#, python-brace-format
+msgid "The GNOME extension for window detection could not be installed: {error}"
+msgstr "Die GNOME-Erweiterung zur Fenstererkennung konnte nicht installiert werden: {error}"
+
+#: dailydeck/integration.py
+msgid "Window detection for GNOME has been set up. It becomes active after logging out and in again – until then the deck only shows the default profile."
+msgstr "Die Fenstererkennung für GNOME wurde eingerichtet. Sie ist nach dem nächsten Ab- und Anmelden aktiv – bis dahin zeigt das Deck nur das Standardprofil."
+
+#: dailydeck/keys/macos_quartz.py
+msgid "Daily Deck may not send key presses. Allow it under System Settings → Privacy & Security → Accessibility (for the app, or the terminal it runs from)."
+msgstr "Daily Deck darf keine Tastendrücke senden. Freigabe erteilen unter Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen (für die App bzw. das Terminal, aus dem sie läuft)."
+
+#: dailydeck/keys/parse.py
+#, python-brace-format
+msgid "empty key in “{shortcut}”"
+msgstr "leere Taste in „{shortcut}“"
+
+#: dailydeck/keys/parse.py
+msgid "empty shortcut"
+msgstr "leeres Kürzel"
+
+#: dailydeck/keys/parse.py
+#, python-brace-format
+msgid "unknown key “{key}” in “{shortcut}”"
+msgstr "unbekannte Taste „{key}“ in „{shortcut}“"
+
+#: dailydeck/keys/parse.py
+#, python-brace-format
+msgid "unknown modifier “{modifier}” in “{shortcut}”"
+msgstr "unbekannter Modifier „{modifier}“ in „{shortcut}“"
+
+#: dailydeck/profile_io.py
+msgid "not a Daily Deck profile file"
+msgstr "keine Daily-Deck-Profildatei"
+
+#: dailydeck/profile_io.py
+msgid "profile data missing"
+msgstr "Profildaten fehlen"
+
+#: dailydeck/profile_io.py
+msgid "profile.toml is too large"
+msgstr "profile.toml ist zu groß"
+
+#: dailydeck/profile_io.py
+msgid "the profile comes from a newer version"
+msgstr "Profil stammt aus einer neueren Version"
+
+#: dailydeck/profile_io.py
+#, python-brace-format
+msgid "{file}: invalid profile file ({error})"
+msgstr "{file}: ungültige Profildatei ({error})"
+
+#: dailydeck/render.py
+msgid "system font"
+msgstr "Systemschrift"
+
+#: dailydeck/tray.py
+msgid "Automatic (active window)"
+msgstr "Automatisch (aktives Fenster)"
+
+#: dailydeck/tray.py
+msgid "Brightness"
+msgstr "Helligkeit"
+
+#: dailydeck/tray.py
+msgid "Create a profile for this app …"
+msgstr "Profil für dieses Programm anlegen …"
+
+#: dailydeck/tray.py
+msgid "Daily Deck is already running (icon in the menu bar or tray)."
+msgstr "Daily Deck läuft bereits (Symbol in der Leiste)."
+
+#: dailydeck/tray.py
+#, python-brace-format
+msgid "Edit profile “{profile}” …"
+msgstr "Profil „{profile}“ bearbeiten …"
+
+#: dailydeck/tray.py
+msgid "Edit profile …"
+msgstr "Profil bearbeiten …"
+
+#: dailydeck/tray.py
+msgid ""
+"For the Daily Deck icon to appear in the top bar, the GNOME extension “AppIndicator” has to be enabled.\n"
+"\n"
+"Enable it now? (Icons of other apps that offer one will then appear there as well.)"
+msgstr ""
+"Damit das Daily-Deck-Symbol in der oberen Leiste erscheint, muss die GNOME-Erweiterung „AppIndicator“ aktiviert werden.\n"
+"\n"
+"Jetzt aktivieren? (Danach erscheinen dort auch die Symbole anderer Programme, die so etwas anbieten.)"
+
+#: dailydeck/tray.py
+msgid "No Stream Deck connected"
+msgstr "Kein Stream Deck verbunden"
+
+#: dailydeck/tray.py
+msgid "Open editor …"
+msgstr "Editor öffnen …"
+
+#: dailydeck/tray.py
+msgid "Pause"
+msgstr "Pausieren"
+
+#: dailydeck/tray.py
+msgid "Paused"
+msgstr "Pausiert"
+
+#: dailydeck/tray.py
+msgid "Pin profile"
+msgstr "Profil festhalten"
+
+#: dailydeck/tray.py
+#, python-brace-format
+msgid "Pinned: {profile}"
+msgstr "Festgehalten: {profile}"
+
+#: dailydeck/tray.py
+msgid "Preview from the editor"
+msgstr "Vorschau aus dem Editor"
+
+#: dailydeck/tray.py
+#, python-brace-format
+msgid "Profile: {profile}"
+msgstr "Profil: {profile}"
+
+#: dailydeck/tray.py
+#, python-brace-format
+msgid "Setting not saved: {error}"
+msgstr "Einstellung nicht gespeichert: {error}"
+
+#: dailydeck/tray.py
+msgid "Show app icon"
+msgstr "Programmicon einblenden"
+
+#: dailydeck/tray.py
+msgid "Show shortcuts on the keys"
+msgstr "Kürzel auf den Tasten anzeigen"
+
+#: dailydeck/tray.py
+msgid "Start at login"
+msgstr "Beim Anmelden starten"
+
+#: dailydeck/tray.py
+#, python-brace-format
+msgid "Start at login not changed: {error}"
+msgstr "Autostart nicht geändert: {error}"
+
+#: dailydeck/tray.py
+msgid "The icon in the top bar needs an AppIndicator extension for GNOME (package “gnome-shell-extension-appindicator”). The Stream Deck works anyway; settings are then available in the editor."
+msgstr "Für das Symbol in der oberen Leiste fehlt eine AppIndicator-Erweiterung für GNOME (Paket „gnome-shell-extension-appindicator“). Das Stream Deck funktioniert trotzdem; Einstellungen gibt es dann im Editor."
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Address"
+msgstr "Adresse"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Archive"
+msgstr "Archiv"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Back"
+msgstr "Zurück"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Book|mark"
+msgstr "Lese|zeichen"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Chrome"
+msgstr "Chrome"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Clear"
+msgstr "Leeren"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Close tab"
+msgstr "Tab zu"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Close window"
+msgstr "Fenster schließen"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Commands"
+msgstr "Befehle"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Copy"
+msgstr "Kopieren"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Cut"
+msgstr "Aus|schneiden"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Default"
+msgstr "Standard"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Definition"
+msgstr "Definition"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Delete"
+msgstr "Löschen"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Dev tools"
+msgstr "Ent|wickler"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Downloads"
+msgstr "Downloads"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Explorer"
+msgstr "Explorer"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Files"
+msgstr "Dateien"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Filter"
+msgstr "Filter"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Find"
+msgstr "Suchen"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Firefox"
+msgstr "Firefox"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Format"
+msgstr "Forma|tieren"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Forward"
+msgstr "Vor"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Forward mail"
+msgstr "Weiter|leiten"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Get mail"
+msgstr "Abrufen"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Git"
+msgstr "Git"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Grid"
+msgstr "Raster"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Hidden files"
+msgstr "Versteckte"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "History"
+msgstr "Verlauf"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Home folder"
+msgstr "Persönl. Ordner"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Incognito"
+msgstr "Inkognito"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Interrupt"
+msgstr "Abbrechen"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Junk"
+msgstr "Junk"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Line end"
+msgstr "Zeilen|ende"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Line start"
+msgstr "Zeilen|anfang"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "List"
+msgstr "Liste"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Louder"
+msgstr "Lauter"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Mark read"
+msgstr "Gelesen"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Mute"
+msgstr "Stumm"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "New folder"
+msgstr "Neuer Ordner"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "New message"
+msgstr "Neue Nachricht"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "New tab"
+msgstr "Neuer Tab"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "New window"
+msgstr "Neues Fenster"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Next"
+msgstr "Weiter"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Next tab"
+msgstr "Nächster Tab"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Open file"
+msgstr "Datei öffnen"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Overview"
+msgstr "Übersicht"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Panel"
+msgstr "Panel"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Paste"
+msgstr "Einfügen"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Path"
+msgstr "Pfad"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Play / Pause"
+msgstr "Play / Pause"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Prev. tab"
+msgstr "Vorh. Tab"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Previous"
+msgstr "Zurück"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Private"
+msgstr "Privat"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Proper|ties"
+msgstr "Eigen|schaften"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Quieter"
+msgstr "Leiser"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Redo"
+msgstr "Wieder|holen"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Refe|rences"
+msgstr "Refe|renzen"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Reload"
+msgstr "Neu laden"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Rename"
+msgstr "Umbe|nennen"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Reopen tab"
+msgstr "Tab zurück"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Repeat"
+msgstr "Wieder|holen"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Reply"
+msgstr "Antworten"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Reply all"
+msgstr "Allen antworten"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Safari"
+msgstr "Safari"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Save"
+msgstr "Speichern"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Screen|shot"
+msgstr "Screen|shot"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Search all"
+msgstr "Suche global"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Search history"
+msgstr "Verlauf suchen"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Select all"
+msgstr "Alles"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Shuffle"
+msgstr "Shuffle"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Side|bar"
+msgstr "Seiten|leiste"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Spotify"
+msgstr "Spotify"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Star"
+msgstr "Markieren"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Terminal"
+msgstr "Terminal"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Thunderbird"
+msgstr "Thunderbird"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Trash"
+msgstr "Papierkorb"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Undo"
+msgstr "Rück|gängig"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Up one level"
+msgstr "Eine Ebene hoch"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "VS Code"
+msgstr "VS Code"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Zen"
+msgstr "Zen"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Zoom +"
+msgstr "Zoom +"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Zoom 100%"
+msgstr "Zoom 100%"
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Zoom −"
+msgstr "Zoom −"

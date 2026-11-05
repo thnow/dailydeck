@@ -1,0 +1,671 @@
+# dailydeck – Stream-Deck-Profile pro Anwendung
+#
+# Die Datei wird im laufenden Betrieb neu geladen, sobald sie gespeichert wird.
+#
+# Profile werden von oben nach unten geprüft, das erste passende gewinnt.
+#   match  = Liste von Kennungen der Anwendung (Groß-/Kleinschreibung egal,
+#            Platzhalter * und ? erlaubt). Verglichen wird mit WM-Klasse,
+#            Desktop-ID (Linux), EXE-Name (Windows) bzw. Bundle-ID (macOS).
+#            Die Kennungen des aktiven Fensters zeigt:
+#              .venv/bin/python -m dailydeck --print-focus
+#   title  = optionaler regulärer Ausdruck auf den Fenstertitel
+#   default = true  -> wird benutzt, wenn kein anderes Profil passt
+#   icon   = optional eigenes Bild statt des automatisch gefundenen Programmicons
+#   font   = optional eigene Schriftart für dieses Profil, z. B. "Ubuntu:Bold"
+#
+# Tasten (buttons) werden der Reihe nach belegt (oben links nach unten rechts).
+# Ein leerer [[profiles.buttons]]-Block lässt eine Taste frei. Hat ein Profil
+# mehr Tasten als das Deck, wird die letzte Taste zum Blättern benutzt.
+#   label      Beschriftung (\n für Zeilenumbruch)
+#   keys       Kürzel, z. B. "primary+shift+t", "alt+F4", "primary++", "super".
+#              Folgen mit Leerzeichen: "primary+k primary+c".
+#              Modifier: primary, ctrl/strg, shift, alt/option, altgr, super/win/cmd
+#              primary ist der Haupt-Modifier des Systems: ⌘ auf dem Mac, sonst Strg.
+#              So gilt ein Profil auf allen Systemen; ctrl bleibt überall Strg
+#              (z. B. ctrl+c zum Abbrechen im Terminal).
+#   keys_macos, keys_windows, keys_linux
+#              optional: auf diesem System stattdessen senden, wenn das Programm
+#              dort ganz andere Tasten nutzt (z. B. Umbenennen im Finder: "enter").
+#              Zeichen werden passend zum Tastaturlayout gesendet; auf dem Mac
+#              wird dabei z. B. "cmd+[" auf deutschem Layout zu ⌘Ö wie im Menü.
+#              Benannte Tasten: enter, esc, tab, space, backspace, delete,
+#              insert, home, end, pageup, pagedown, up, down, left, right,
+#              f1–f24, print, menu, volumeup, volumedown, mute, playpause,
+#              nexttrack, prevtrack, plus, minus
+#   color      Hintergrundfarbe der Taste, text_color Schriftfarbe
+#   icon       Pfad zu einem Bild (relativ zu dieser Datei)
+#   font_size  maximale Schriftgröße
+
+[settings]
+brightness = 60          # 0–100
+show_keys = true         # Kürzel klein unter der Beschriftung anzeigen
+poll_interval = 0.25     # Sekunden zwischen Fokus-Abfragen
+background = "#1e1e1e"
+text_color = "#ffffff"
+# font = "Ubuntu:Bold"   # "Familie:Stil" (siehe fc-list) oder Pfad zu einer Schriftdatei
+
+# Programmicon der aktiven Anwendung über das ganze Deck legen
+app_icon = true
+app_icon_brightness = 0.7   # Helligkeit des Icons hinter den Tasten (0–1)
+button_opacity = 0.35       # Deckkraft der Tastenfarbe über dem Icon (0–1)
+app_icon_flash = 0.6        # Sekunden, die das Icon beim Wechsel voll aufleuchtet (0 = aus)
+key_spacing = 36            # Abstand der Tasten in Pixeln, damit das Icon durchgehend wirkt
+
+# [keyboard]             # nur Linux; Standard: aus den GNOME-Einstellungen
+# layout = "de"
+# variant = "nodeadkeys"
+
+# ---------------------------------------------------------------- VS Code
+[[profiles]]
+name = "VS Code"
+match = ["code", "code-url-handler", "com.microsoft.vscode", "code.exe"]
+color = "#0b4f8a"
+
+  [[profiles.buttons]]
+  label = "Befehle"
+  keys = "primary+shift+p"
+
+  [[profiles.buttons]]
+  label = "Datei öffnen"
+  keys = "primary+p"
+
+  [[profiles.buttons]]
+  label = "Seiten­leiste"
+  keys = "primary+b"
+
+  [[profiles.buttons]]
+  label = "Panel"
+  keys = "primary+j"
+
+  [[profiles.buttons]]
+  label = "Zen"
+  keys = "primary+k z"
+
+  [[profiles.buttons]]
+  label = "Explorer"
+  keys = "primary+shift+e"
+
+  [[profiles.buttons]]
+  label = "Suche global"
+  keys = "primary+shift+f"
+
+  [[profiles.buttons]]
+  label = "Git"
+  keys = "ctrl+shift+g"
+
+  [[profiles.buttons]]
+  label = "Forma­tieren"
+  keys = "shift+alt+f"
+  keys_linux = "ctrl+shift+i"
+
+  [[profiles.buttons]]
+  label = "Speichern"
+  keys = "primary+s"
+  color = "#2e7d32"
+
+  [[profiles.buttons]]
+  label = "Definition"
+  keys = "F12"
+
+  [[profiles.buttons]]
+  label = "Refe­renzen"
+  keys = "shift+F12"
+
+  [[profiles.buttons]]
+  label = "Umbe­nennen"
+  keys = "F2"
+
+  [[profiles.buttons]]
+  label = "Tab zu"
+  keys = "primary+w"
+
+  [[profiles.buttons]]
+  label = "Tab zurück"
+  keys = "primary+shift+t"
+
+# ---------------------------------------------------------------- Firefox
+[[profiles]]
+name = "Firefox"
+match = ["firefox", "firefox_firefox", "firefox-esr", "org.mozilla.firefox", "firefox.exe"]
+color = "#8f2d00"
+
+  [[profiles.buttons]]
+  label = "Neuer Tab"
+  keys = "primary+t"
+
+  [[profiles.buttons]]
+  label = "Tab zu"
+  keys = "primary+w"
+
+  [[profiles.buttons]]
+  label = "Tab zurück"
+  keys = "primary+shift+t"
+
+  [[profiles.buttons]]
+  label = "Zurück"
+  keys = "alt+left"
+  keys_macos = "cmd+left"
+
+  [[profiles.buttons]]
+  label = "Vor"
+  keys = "alt+right"
+  keys_macos = "cmd+right"
+
+  [[profiles.buttons]]
+  label = "Adresse"
+  keys = "primary+l"
+
+  [[profiles.buttons]]
+  label = "Suchen"
+  keys = "primary+f"
+
+  [[profiles.buttons]]
+  label = "Neu laden"
+  keys = "F5"
+  keys_macos = "cmd+r"
+
+  [[profiles.buttons]]
+  label = "Lese­zeichen"
+  keys = "primary+d"
+
+  [[profiles.buttons]]
+  label = "Privat"
+  keys = "primary+shift+p"
+
+  [[profiles.buttons]]
+  label = "Vorh. Tab"
+  keys = "ctrl+pageup"
+  keys_macos = "ctrl+shift+tab"
+
+  [[profiles.buttons]]
+  label = "Nächster Tab"
+  keys = "ctrl+pagedown"
+  keys_macos = "ctrl+tab"
+
+  [[profiles.buttons]]
+  label = "Downloads"
+  keys = "primary+j"
+  keys_linux = "ctrl+shift+y"
+
+  [[profiles.buttons]]
+  label = "Ent­wickler"
+  keys = "F12"
+  keys_macos = "cmd+alt+i"
+
+  [[profiles.buttons]]
+  label = "Zoom +"
+  keys = "primary++"
+
+  [[profiles.buttons]]
+  label = "Zoom −"
+  keys = "primary+minus"
+
+  [[profiles.buttons]]
+  label = "Zoom 100%"
+  keys = "primary+0"
+
+# ---------------------------------------------------------------- Chrome / Chromium
+[[profiles]]
+name = "Chrome"
+match = ["google-chrome", "chromium*", "com.google.chrome", "chrome.exe"]
+color = "#174ea6"
+
+  [[profiles.buttons]]
+  label = "Neuer Tab"
+  keys = "primary+t"
+
+  [[profiles.buttons]]
+  label = "Tab zu"
+  keys = "primary+w"
+
+  [[profiles.buttons]]
+  label = "Tab zurück"
+  keys = "primary+shift+t"
+
+  [[profiles.buttons]]
+  label = "Zurück"
+  keys = "alt+left"
+  keys_macos = "cmd+["
+
+  [[profiles.buttons]]
+  label = "Vor"
+  keys = "alt+right"
+  keys_macos = "cmd+]"
+
+  [[profiles.buttons]]
+  label = "Adresse"
+  keys = "primary+l"
+
+  [[profiles.buttons]]
+  label = "Suchen"
+  keys = "primary+f"
+
+  [[profiles.buttons]]
+  label = "Neu laden"
+  keys = "F5"
+  keys_macos = "cmd+r"
+
+  [[profiles.buttons]]
+  label = "Lese­zeichen"
+  keys = "primary+d"
+
+  [[profiles.buttons]]
+  label = "Inkognito"
+  keys = "primary+shift+n"
+
+  [[profiles.buttons]]
+  label = "Vorh. Tab"
+  keys = "ctrl+pageup"
+  keys_macos = "ctrl+shift+tab"
+
+  [[profiles.buttons]]
+  label = "Nächster Tab"
+  keys = "ctrl+pagedown"
+  keys_macos = "ctrl+tab"
+
+  [[profiles.buttons]]
+  label = "Downloads"
+  keys = "ctrl+j"
+  keys_macos = "cmd+shift+j"
+
+  [[profiles.buttons]]
+  label = "Ent­wickler"
+  keys = "F12"
+  keys_macos = "cmd+alt+i"
+
+  [[profiles.buttons]]
+  label = "Verlauf"
+  keys = "ctrl+h"
+  keys_macos = "cmd+y"
+
+# ---------------------------------------------------------------- Terminal
+[[profiles]]
+name = "Terminal"
+match = ["org.gnome.terminal", "gnome-terminal*", "org.gnome.ptyxis", "ptyxis",
+         "windowsterminal.exe", "com.apple.terminal", "com.googlecode.iterm2"]
+color = "#263238"
+text_color = "#a5d6a7"
+
+  [[profiles.buttons]]
+  label = "Neuer Tab"
+  keys = "ctrl+shift+t"
+  keys_macos = "cmd+t"
+
+  [[profiles.buttons]]
+  label = "Neues Fenster"
+  keys = "ctrl+shift+n"
+  keys_macos = "cmd+n"
+
+  [[profiles.buttons]]
+  label = "Tab zu"
+  keys = "ctrl+shift+w"
+  keys_macos = "cmd+w"
+
+  [[profiles.buttons]]
+  label = "Vorh. Tab"
+  keys = "ctrl+pageup"
+  keys_macos = "ctrl+shift+tab"
+  keys_windows = "ctrl+shift+tab"
+
+  [[profiles.buttons]]
+  label = "Nächster Tab"
+  keys = "ctrl+pagedown"
+  keys_macos = "ctrl+tab"
+  keys_windows = "ctrl+tab"
+
+  [[profiles.buttons]]
+  label = "Kopieren"
+  keys = "ctrl+shift+c"
+  keys_macos = "cmd+c"
+
+  [[profiles.buttons]]
+  label = "Einfügen"
+  keys = "ctrl+shift+v"
+  keys_macos = "cmd+v"
+
+  [[profiles.buttons]]
+  label = "Suchen"
+  keys = "ctrl+shift+f"
+  keys_macos = "cmd+f"
+
+  [[profiles.buttons]]
+  label = "Zoom +"
+  keys = "primary++"
+
+  [[profiles.buttons]]
+  label = "Zoom −"
+  keys = "primary+minus"
+
+  [[profiles.buttons]]
+  label = "Abbrechen"
+  keys = "ctrl+c"
+  color = "#b71c1c"
+
+  [[profiles.buttons]]
+  label = "Leeren"
+  keys = "ctrl+l"
+
+  [[profiles.buttons]]
+  label = "Verlauf suchen"
+  keys = "ctrl+r"
+
+  [[profiles.buttons]]
+  label = "Zeilen­anfang"
+  keys = "ctrl+a"
+
+  [[profiles.buttons]]
+  label = "Zeilen­ende"
+  keys = "ctrl+e"
+
+# ---------------------------------------------------------------- Dateien
+[[profiles]]
+name = "Dateien"
+match = ["org.gnome.nautilus", "nautilus", "explorer.exe", "com.apple.finder"]
+color = "#37474f"
+
+  [[profiles.buttons]]
+  label = "Zurück"
+  keys = "alt+left"
+  keys_macos = "cmd+["
+
+  [[profiles.buttons]]
+  label = "Vor"
+  keys = "alt+right"
+  keys_macos = "cmd+]"
+
+  [[profiles.buttons]]
+  label = "Eine Ebene hoch"
+  keys = "alt+up"
+  keys_macos = "cmd+up"
+
+  [[profiles.buttons]]
+  label = "Persönl. Ordner"
+  keys = "alt+home"
+  keys_macos = "cmd+shift+h"
+
+  [[profiles.buttons]]
+  label = "Pfad"
+  keys = "ctrl+l"
+  keys_macos = "cmd+shift+g"
+
+  [[profiles.buttons]]
+  label = "Neuer Ordner"
+  keys = "primary+shift+n"
+
+  [[profiles.buttons]]
+  label = "Umbe­nennen"
+  keys = "F2"
+  keys_macos = "enter"
+
+  [[profiles.buttons]]
+  label = "Versteckte"
+  keys = "ctrl+h"
+  keys_macos = "cmd+shift+."
+
+  [[profiles.buttons]]
+  label = "Suchen"
+  keys = "primary+f"
+
+  [[profiles.buttons]]
+  label = "Eigen­schaften"
+  keys = "primary+i"
+  keys_windows = "alt+enter"
+
+  [[profiles.buttons]]
+  label = "Neuer Tab"
+  keys = "primary+t"
+
+  [[profiles.buttons]]
+  label = "Liste"
+  keys = "ctrl+1"
+  keys_macos = "cmd+2"
+  keys_windows = "ctrl+shift+6"
+
+  [[profiles.buttons]]
+  label = "Raster"
+  keys = "ctrl+2"
+  keys_macos = "cmd+1"
+  keys_windows = "ctrl+shift+2"
+
+  [[profiles.buttons]]
+  label = "Papierkorb"
+  keys = "delete"
+  keys_macos = "cmd+backspace"
+  color = "#b71c1c"
+
+# ---------------------------------------------------------------- Thunderbird
+[[profiles]]
+name = "Thunderbird"
+match = ["thunderbird*", "org.mozilla.thunderbird", "thunderbird.exe"]
+color = "#0b3d91"
+
+  [[profiles.buttons]]
+  label = "Abrufen"
+  keys = "F5"
+  keys_macos = "cmd+shift+t"
+
+  [[profiles.buttons]]
+  label = "Neue Nachricht"
+  keys = "primary+n"
+
+  [[profiles.buttons]]
+  label = "Antworten"
+  keys = "primary+r"
+
+  [[profiles.buttons]]
+  label = "Allen antworten"
+  keys = "primary+shift+r"
+
+  [[profiles.buttons]]
+  label = "Weiter­leiten"
+  keys = "primary+l"
+
+  [[profiles.buttons]]
+  label = "Archiv"
+  keys = "a"
+
+  [[profiles.buttons]]
+  label = "Gelesen"
+  keys = "m"
+
+  [[profiles.buttons]]
+  label = "Markieren"
+  keys = "s"
+
+  [[profiles.buttons]]
+  label = "Junk"
+  keys = "j"
+
+  [[profiles.buttons]]
+  label = "Löschen"
+  keys = "delete"
+  keys_macos = "backspace"
+  color = "#b71c1c"
+
+  [[profiles.buttons]]
+  label = "Suchen"
+  keys = "primary+k"
+
+  [[profiles.buttons]]
+  label = "Filter"
+  keys = "primary+shift+k"
+
+# ---------------------------------------------------------------- Spotify
+[[profiles]]
+name = "Spotify"
+match = ["spotify", "spotify.exe", "com.spotify.client"]
+color = "#14532d"
+
+  [[profiles.buttons]]
+  label = "Zurück"
+  keys = "prevtrack"
+
+  [[profiles.buttons]]
+  label = "Play / Pause"
+  keys = "playpause"
+
+  [[profiles.buttons]]
+  label = "Weiter"
+  keys = "nexttrack"
+
+  [[profiles.buttons]]
+  label = "Leiser"
+  keys = "volumedown"
+
+  [[profiles.buttons]]
+  label = "Lauter"
+  keys = "volumeup"
+
+  [[profiles.buttons]]
+  label = "Shuffle"
+  keys = "primary+s"
+
+  [[profiles.buttons]]
+  label = "Wieder­holen"
+  keys = "primary+r"
+
+  [[profiles.buttons]]
+  label = "Suchen"
+  keys = "primary+k"
+
+# ---------------------------------------------------------------- Safari (nur macOS)
+[[profiles]]
+name = "Safari"
+match = ["com.apple.safari"]
+color = "#0d47a1"
+
+  [[profiles.buttons]]
+  label = "Neuer Tab"
+  keys = "cmd+t"
+
+  [[profiles.buttons]]
+  label = "Tab zu"
+  keys = "cmd+w"
+
+  [[profiles.buttons]]
+  label = "Tab zurück"
+  keys = "cmd+shift+t"
+
+  [[profiles.buttons]]
+  label = "Zurück"
+  keys = "cmd+["
+
+  [[profiles.buttons]]
+  label = "Vor"
+  keys = "cmd+]"
+
+  [[profiles.buttons]]
+  label = "Adresse"
+  keys = "cmd+l"
+
+  [[profiles.buttons]]
+  label = "Suchen"
+  keys = "cmd+f"
+
+  [[profiles.buttons]]
+  label = "Neu laden"
+  keys = "cmd+r"
+
+  [[profiles.buttons]]
+  label = "Lese­zeichen"
+  keys = "cmd+d"
+
+  [[profiles.buttons]]
+  label = "Privat"
+  keys = "cmd+shift+n"
+
+  [[profiles.buttons]]
+  label = "Vorh. Tab"
+  keys = "ctrl+shift+tab"
+
+  [[profiles.buttons]]
+  label = "Nächster Tab"
+  keys = "ctrl+tab"
+
+  [[profiles.buttons]]
+  label = "Downloads"
+  keys = "cmd+alt+l"
+
+  [[profiles.buttons]]
+  label = "Ent­wickler"
+  keys = "cmd+alt+i"
+
+  [[profiles.buttons]]
+  label = "Verlauf"
+  keys = "cmd+y"
+
+# ---------------------------------------------------------------- Standard
+[[profiles]]
+name = "Standard"
+default = true
+color = "#303030"
+
+  [[profiles.buttons]]
+  label = "Rück­gängig"
+  keys = "primary+z"
+
+  [[profiles.buttons]]
+  label = "Wieder­holen"
+  keys = "primary+shift+z"
+  keys_windows = "ctrl+y"
+
+  [[profiles.buttons]]
+  label = "Aus­schneiden"
+  keys = "primary+x"
+
+  [[profiles.buttons]]
+  label = "Kopieren"
+  keys = "primary+c"
+
+  [[profiles.buttons]]
+  label = "Einfügen"
+  keys = "primary+v"
+
+  [[profiles.buttons]]
+  label = "Alles"
+  keys = "primary+a"
+
+  [[profiles.buttons]]
+  label = "Suchen"
+  keys = "primary+f"
+
+  [[profiles.buttons]]
+  label = "Speichern"
+  keys = "primary+s"
+
+  [[profiles.buttons]]
+  label = "Übersicht"
+  keys = "super"
+  keys_macos = "ctrl+up"
+  keys_windows = "super+tab"
+
+  [[profiles.buttons]]
+  label = "Screen­shot"
+  keys = "print"
+  keys_macos = "cmd+shift+5"
+
+  [[profiles.buttons]]
+  label = "Fenster schließen"
+  keys = "alt+F4"
+  keys_macos = "cmd+w"
+  color = "#b71c1c"
+
+  [[profiles.buttons]]
+  label = "Leiser"
+  keys = "volumedown"
+  color = "#1b3a4b"
+
+  [[profiles.buttons]]
+  label = "Lauter"
+  keys = "volumeup"
+  color = "#1b3a4b"
+
+  [[profiles.buttons]]
+  label = "Stumm"
+  keys = "mute"
+  color = "#1b3a4b"
+
+  [[profiles.buttons]]
+  label = "Play / Pause"
+  keys = "playpause"
+  color = "#1b3a4b"

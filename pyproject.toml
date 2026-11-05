@@ -51,7 +51,7 @@ namespaces = true  # dailydeck/data holds package data without __init__.py
 version = { attr = "dailydeck.__version__" }
 
 [tool.setuptools.package-data]
-dailydeck = ["data/*.toml", "data/*.svg", "data/gnome-extension/*/*"]
+dailydeck = ["data/*.toml", "data/*.svg", "data/locale/*.po", "data/gnome-extension/*/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

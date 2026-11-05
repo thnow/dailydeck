@@ -5,6 +5,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach
 
 ## [Unreleased]
 
+### Neu
+- Mehrsprachig: Oberfläche, Meldungen und die Standardprofile auf Englisch und Deutsch; die
+  Sprache folgt dem System und lässt sich unter Einstellungen → Sprache festlegen. Weitere
+  Sprachen lassen sich als `.po`-Datei beitragen, ohne Build-Schritt – siehe
+  [docs/TRANSLATING.md](docs/TRANSLATING.md).
+- Eine unveränderte Standardkonfiguration aus 0.2.0 wird in der eigenen Sprache neu angelegt
+  (alte Fassung als `config.toml.bak`).
+
 ## [0.2.0] – 2026-11-05
 
 ### Neu

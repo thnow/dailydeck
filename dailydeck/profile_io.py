@@ -20,6 +20,7 @@ import tomli_w
 from PIL import Image
 
 from .config import ConfigError, load_profile, parse_config
+from .i18n import _
 
 PROFILE_SUFFIX = ".dailydeck"
 FORMAT_NAME = "dailydeck-profile"
@@ -121,15 +122,15 @@ def import_profile(source: Path, config_dir: Path) -> dict:
         with zipfile.ZipFile(source) as zf:
             info = zf.getinfo("profile.toml")
             if info.file_size > MAX_PROFILE_BYTES:
-                raise ConfigError("profile.toml ist zu groß")
+                raise ConfigError(_("profile.toml is too large"))
             doc = tomllib.loads(zf.read(info).decode("utf-8"))
             if doc.get("format") != FORMAT_NAME:
-                raise ConfigError("keine dailydeck-Profildatei")
+                raise ConfigError(_("not a Daily Deck profile file"))
             if int(doc.get("version", 0)) > FORMAT_VERSION:
-                raise ConfigError("Profil stammt aus einer neueren Version")
+                raise ConfigError(_("the profile comes from a newer version"))
             profile = doc.get("profile")
             if not isinstance(profile, dict):
-                raise ConfigError("Profildaten fehlen")
+                raise ConfigError(_("profile data missing"))
             profile = clean_profile(profile)
 
             target_dir = config_dir / "icons" / _slug(profile.get("name", ""))
@@ -169,7 +170,7 @@ def import_profile(source: Path, config_dir: Path) -> dict:
                     else:
                         del holder["icon"]
     except (zipfile.BadZipFile, KeyError, UnicodeDecodeError, tomllib.TOMLDecodeError, ValueError) as e:
-        raise ConfigError(f"{source.name}: ungültige Profildatei ({e})") from e
+        raise ConfigError(_("{file}: invalid profile file ({error})").format(file=source.name, error=e)) from e
 
     load_profile(profile, 0, config_dir)  # validate shortcuts etc.
     return profile
