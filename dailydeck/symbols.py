@@ -34,7 +34,7 @@ CATEGORIES: dict[str, tuple[str, ...]] = {
         "arrow-left", "arrow-right", "arrow-up", "arrow-down", "chevron-left", "chevron-right",
         "chevrons-left", "chevrons-right", "house", "refresh-cw", "rotate-ccw", "rotate-cw", "zoom-in",
         "zoom-out", "maximize-2", "minimize-2", "fullscreen", "panel-left", "panel-right", "panel-bottom",
-        "layout-grid", "columns-2", "app-window", "monitor", "history", "move",
+        "layout-grid", "columns-2", "app-window", "monitor", "history", "move", "map", "car",
     ),
     N_("Development"): (
         "terminal", "square-terminal", "code", "braces", "bug", "bug-play", "git-branch",
@@ -50,7 +50,7 @@ CATEGORIES: dict[str, tuple[str, ...]] = {
         "settings", "power", "lock", "lock-open", "eye", "eye-off", "sun", "moon", "sun-moon", "wifi",
         "battery-full", "keyboard", "mouse-pointer-2", "log-out", "cloud", "globe",
         "screen-share", "app-window-mac", "info", "circle-help", "triangle-alert", "circle-check",
-        "circle-x", "ban",
+        "circle-x", "ban", "scan",
     ),
     N_("Other"): (
         "star", "heart", "bookmark", "flag", "tag", "pin", "zap", "lightbulb", "coffee", "layers",

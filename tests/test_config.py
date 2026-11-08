@@ -62,7 +62,7 @@ def test_bundled_default_config_on_every_system(platform):
             button_chords(button, platform)  # raises on invalid keys
 
 
-@pytest.mark.parametrize("version", ["0.1.0", "0.2.0"])
+@pytest.mark.parametrize("version", ["0.1.0", "0.2.0", "0.3.0-en", "0.3.0-de"])
 def test_untouched_old_default_is_updated(tmp_path, monkeypatch, version):
     import dailydeck.config as config
 

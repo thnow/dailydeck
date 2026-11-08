@@ -534,6 +534,90 @@ color = "#14532d"
   label = "Find"
   keys = "primary+k"
 
+# ---------------------------------------------------------------- Cyberpunk 2077
+# Default key bindings of the game (r6/config/inputUserMappings.xml). Rebound keys
+# in the game's settings? Change them here. steam_app_1091500: Steam/Proton on Linux.
+[[profiles]]
+name = "Cyberpunk 2077"
+match = ["cyberpunk2077.exe", "cyberpunk2077", "steam_app_1091500"]
+color = "#000000"
+text_color = "#fcee0a"
+
+  [[profiles.buttons]]
+  label = "Map"
+  keys = "m"
+  icon = "symbol:map"
+
+  [[profiles.buttons]]
+  label = "Journal"
+  keys = "j"
+  icon = "symbol:list"
+
+  [[profiles.buttons]]
+  label = "Inventory"
+  keys = "i"
+  icon = "symbol:package"
+
+  [[profiles.buttons]]
+  label = "Perks"
+  keys = "p"
+  icon = "symbol:user"
+
+  [[profiles.buttons]]
+  label = "Crafting"
+  keys = "k"
+  icon = "symbol:hammer"
+
+  [[profiles.buttons]]
+  label = "Quick save"
+  keys = "f5"
+  icon = "symbol:save"
+
+  [[profiles.buttons]]
+  label = "Quick load"
+  keys = "f9"
+  icon = "symbol:rotate-ccw"
+
+  [[profiles.buttons]]
+  label = "Call vehicle"
+  keys = "v"
+  icon = "symbol:car"
+
+  [[profiles.buttons]]
+  label = "Phone"
+  keys = "t"
+  icon = "symbol:phone"
+
+  [[profiles.buttons]]
+  label = "Photo mode"
+  keys = "n"
+  icon = "symbol:camera"
+
+  [[profiles.buttons]]
+  label = "Consumable"
+  keys = "x"
+  icon = "symbol:heart"
+
+  [[profiles.buttons]]
+  label = "Cyberware"
+  keys = "e"
+  icon = "symbol:zap"
+
+  [[profiles.buttons]]
+  label = "Holster"
+  keys = "b"
+  icon = "symbol:hand"
+
+  [[profiles.buttons]]
+  label = "Hub"
+  keys = "h"
+  icon = "symbol:layout-grid"
+
+  [[profiles.buttons]]
+  label = "Pause menu"
+  keys = "escape"
+  icon = "symbol:pause"
+
 # ---------------------------------------------------------------- Safari (macOS only)
 [[profiles]]
 name = "Safari"

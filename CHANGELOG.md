@@ -5,6 +5,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follo
 
 ## [Unreleased]
 
+### Added
+- Default profile for **Cyberpunk 2077** (Windows; Steam/Proton on Linux): map, journal,
+  inventory, perks, crafting, quick save/load, vehicle, phone, photo mode and more, with the
+  game's default key bindings. An untouched default configuration from 0.3.0 gets it
+  automatically.
+- Symbols `map`, `car` and `scan`.
+
 ### Fixed
 - The Windows installer and the macOS app now include the licenses of the bundled third-party
   software (`THIRD-PARTY-NOTICES.txt`: Qt/PySide6 under the LGPL, Python, Pillow, hidapi,
