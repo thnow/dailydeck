@@ -113,6 +113,8 @@ def config_dir() -> Path:
 PREVIOUS_DEFAULTS = {
     "c19dadc531305b2557a9fb0f4071ffda5a65c5d58c88be2677337bedf0d425c7",  # 0.1.0
     "dafb558315d12afee0edc866d402c51b9aefcdf72619830a837679458530235f",  # 0.2.0
+    "3143aef5a3ccb1b9ded324bdacbdbd1c2daaea46487cc48270911429b5ae1e0d",  # 0.3.0, English
+    "4bd6efbd22b8a90fb201c92a585a07afa526720ca88be7bb7440c93ea076ed1d",  # 0.3.0, German
 }
 # From 0.3 on the default is written translated (localized_default_config); when it changes,
 # add the hash of its rendering in every language here.
