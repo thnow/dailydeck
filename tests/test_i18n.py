@@ -87,7 +87,8 @@ def test_german_default_config_matches_previous_release():
     def labels(d):
         return [(p["name"], [b.get("label") for b in p.get("buttons", [])]) for p in d["profiles"]]
 
-    assert labels(data) == labels(old)
+    old_names = {p["name"] for p in old["profiles"]}
+    assert [entry for entry in labels(data) if entry[0] in old_names] == labels(old)  # later profiles may follow
     assert any(SOFT_HYPHEN in (b.get("label") or "") for p in data["profiles"] for b in p.get("buttons", []))
 
 

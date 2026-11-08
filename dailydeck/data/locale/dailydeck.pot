@@ -867,6 +867,11 @@ msgstr ""
 
 #: dailydeck/data/default_config.toml
 msgctxt "default config"
+msgid "Call vehicle"
+msgstr ""
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
 msgid "Chrome"
 msgstr ""
 
@@ -892,12 +897,32 @@ msgstr ""
 
 #: dailydeck/data/default_config.toml
 msgctxt "default config"
+msgid "Consumable"
+msgstr ""
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
 msgid "Copy"
 msgstr ""
 
 #: dailydeck/data/default_config.toml
 msgctxt "default config"
+msgid "Crafting"
+msgstr ""
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
 msgid "Cut"
+msgstr ""
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Cyberpunk 2077"
+msgstr ""
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Cyberware"
 msgstr ""
 
 #: dailydeck/data/default_config.toml
@@ -992,7 +1017,17 @@ msgstr ""
 
 #: dailydeck/data/default_config.toml
 msgctxt "default config"
+msgid "Holster"
+msgstr ""
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
 msgid "Home folder"
+msgstr ""
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Hub"
 msgstr ""
 
 #: dailydeck/data/default_config.toml
@@ -1003,6 +1038,16 @@ msgstr ""
 #: dailydeck/data/default_config.toml
 msgctxt "default config"
 msgid "Interrupt"
+msgstr ""
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Inventory"
+msgstr ""
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Journal"
 msgstr ""
 
 #: dailydeck/data/default_config.toml
@@ -1028,6 +1073,11 @@ msgstr ""
 #: dailydeck/data/default_config.toml
 msgctxt "default config"
 msgid "Louder"
+msgstr ""
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Map"
 msgstr ""
 
 #: dailydeck/data/default_config.toml
@@ -1097,6 +1147,26 @@ msgstr ""
 
 #: dailydeck/data/default_config.toml
 msgctxt "default config"
+msgid "Pause menu"
+msgstr ""
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Perks"
+msgstr ""
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Phone"
+msgstr ""
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Photo mode"
+msgstr ""
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
 msgid "Play / Pause"
 msgstr ""
 
@@ -1118,6 +1188,16 @@ msgstr ""
 #: dailydeck/data/default_config.toml
 msgctxt "default config"
 msgid "Proper|ties"
+msgstr ""
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Quick load"
+msgstr ""
+
+#: dailydeck/data/default_config.toml
+msgctxt "default config"
+msgid "Quick save"
 msgstr ""
 
 #: dailydeck/data/default_config.toml
