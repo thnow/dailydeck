@@ -5,6 +5,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follo
 
 ## [Unreleased]
 
+## [0.3.0] – 2026-11-08
+
 ### Added
 - **Windows support** with an installer (`DailyDeck-<version>-windows-x64-setup.exe`, no admin
   rights needed, optional start at sign-in): focus detection including Store apps, key presses
