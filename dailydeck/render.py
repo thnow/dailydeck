@@ -7,6 +7,7 @@ from pathlib import Path
 
 from PIL import Image, ImageColor, ImageDraw, ImageEnhance, ImageFont, ImageOps
 
+from . import symbols
 from .appicons import load_icon
 from .fonts import ResolvedFont, resolve_font
 from .i18n import _
@@ -208,6 +209,8 @@ def render_key(
     area_top, area_bottom = pad, h - pad - hint_h
     if icon:
         icon_img = load_icon(icon, 256)
+        if icon_img is not None and symbols.is_symbol_file(icon):
+            icon_img = symbols.tinted(icon_img, fg)
         if icon_img is not None:
             icon_h = (area_bottom - area_top) * (0.62 if label else 1.0)
             icon_img = ImageOps.contain(icon_img, (w - 2 * pad, int(icon_h)))

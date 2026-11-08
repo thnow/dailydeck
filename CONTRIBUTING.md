@@ -22,6 +22,17 @@ python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
 
 Grant *Accessibility* to the program that starts it (Terminal, VS Code …).
 
+**Windows**
+
+```powershell
+winget install astral-sh.uv
+uv venv --python 3.13 .venv; uv pip install --python .venv\Scripts\python.exe -e ".[dev]"
+powershell -ExecutionPolicy Bypass -File scripts\fetch-hidapi.ps1   # hidapi.dll for the device
+.venv\Scripts\pythonw.exe -m dailydeck --tray
+```
+
+Details and the installer build: [docs/WINDOWS.md](docs/WINDOWS.md).
+
 ## Checks
 
 ```bash
@@ -42,12 +53,14 @@ dailydeck/
   layout.py, render.py key images (shared by device and editor)
   i18n.py              translations (data/locale/*.po)
   focus/               which app has the focus: gnome, x11, macos, windows
-  keys/                sending shortcuts: linux_uinput (+ xkb), macos_quartz, pynput_sender (Windows)
+  keys/                sending shortcuts: linux_uinput (+ xkb), macos_quartz, windows_sendinput
   data/                default config, translations, GNOME extension, icon
 data/linux/            desktop files, udev rule, AppStream, man page, systemd unit
 debian/                Ubuntu package
 packaging/macos/       app bundle (PyInstaller)
-scripts/               build-deb.sh, build-macos.sh, version.py, i18n.py
+packaging/windows/     programs (PyInstaller) and installer (Inno Setup)
+scripts/               build-deb.sh, build-macos.sh, build-windows.ps1, version.py, i18n.py,
+                       build-symbols.py (key symbols from Lucide), fetch-hidapi.ps1 (Windows)
 ```
 
 Device, rendering, configuration and editor are platform independent; each system adds a

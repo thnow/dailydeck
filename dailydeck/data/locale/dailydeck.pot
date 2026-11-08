@@ -55,6 +55,10 @@ msgid "Add page"
 msgstr ""
 
 #: dailydeck/gui.py
+msgid "All categories"
+msgstr ""
+
+#: dailydeck/gui.py
 msgid "App icon"
 msgstr ""
 
@@ -67,11 +71,15 @@ msgid "Choose colour"
 msgstr ""
 
 #: dailydeck/gui.py
+msgid "Choose folder …"
+msgstr ""
+
+#: dailydeck/gui.py
 msgid "Choose image"
 msgstr ""
 
 #: dailydeck/gui.py
-msgid "Choose …"
+msgid "Choose symbol"
 msgstr ""
 
 #: dailydeck/gui.py
@@ -84,6 +92,10 @@ msgstr ""
 
 #: dailydeck/gui.py
 msgid "Configuration"
+msgstr ""
+
+#: dailydeck/gui.py
+msgid "Copy the configuration to this computer and stop using the folder? The folder and the other computers are not changed."
 msgstr ""
 
 #: dailydeck/gui.py
@@ -194,7 +206,15 @@ msgid "File changed"
 msgstr ""
 
 #: dailydeck/gui.py
+msgid "File …"
+msgstr ""
+
+#: dailydeck/gui.py
 msgid "Flash on switch"
+msgstr ""
+
+#: dailydeck/gui.py
+msgid "Folder for the configuration"
 msgstr ""
 
 #: dailydeck/gui.py
@@ -247,6 +267,17 @@ msgstr ""
 
 #: dailydeck/gui.py
 msgid "Import …"
+msgstr ""
+
+#: dailydeck/gui.py
+msgid "Keep locally again"
+msgstr ""
+
+#: dailydeck/gui.py
+msgid ""
+"Keep the profiles in a folder that Nextcloud, OneDrive, Syncthing or a Git repository synchronises, and choose the same folder on your other computers.\n"
+"\n"
+"Brightness, language, font and keyboard settings stay separate on each computer."
 msgstr ""
 
 #: dailydeck/gui.py
@@ -374,6 +405,10 @@ msgid "Reload"
 msgstr ""
 
 #: dailydeck/gui.py
+msgid "Replace it with mine"
+msgstr ""
+
+#: dailydeck/gui.py
 msgid "Reset"
 msgstr ""
 
@@ -386,7 +421,15 @@ msgid "Save changes?"
 msgstr ""
 
 #: dailydeck/gui.py
+msgid "Save the changes first?"
+msgstr ""
+
+#: dailydeck/gui.py
 msgid "Saved – the deck picks up the changes right away."
+msgstr ""
+
+#: dailydeck/gui.py
+msgid "Search (English names, e.g. play, folder, arrow)"
 msgstr ""
 
 #: dailydeck/gui.py
@@ -433,6 +476,25 @@ msgid "Switch windows … {seconds}"
 msgstr ""
 
 #: dailydeck/gui.py
+msgid "Symbol …"
+msgstr ""
+
+#: dailydeck/gui.py
+msgid "Synchronisation"
+msgstr ""
+
+#: dailydeck/gui.py
+msgid "Synchronisation …"
+msgstr ""
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid ""
+"Synchronised through the folder:\n"
+"{folder}"
+msgstr ""
+
+#: dailydeck/gui.py
 #, python-brace-format
 msgid "System language ({language})"
 msgstr ""
@@ -458,6 +520,18 @@ msgid ""
 msgstr ""
 
 #: dailydeck/gui.py
+#, python-brace-format
+msgid "The configuration is now read from {path}."
+msgstr ""
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid ""
+"The configuration is stored on this computer only:\n"
+"{path}"
+msgstr ""
+
+#: dailydeck/gui.py
 msgid "The configuration was changed outside the editor (e.g. from the tray menu)."
 msgstr ""
 
@@ -475,12 +549,28 @@ msgstr ""
 #: dailydeck/gui.py
 #, python-brace-format
 msgid ""
+"The sync folder {folder} has no configuration (yet) – maybe it is not synchronised yet. Until then the local configuration is used:\n"
+"{path}"
+msgstr ""
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid "There already is a configuration in this folder ({profiles} profiles, changed {time}), e.g. from another computer."
+msgstr ""
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid ""
 "There is already a profile “{name}”. Replace it?\n"
 "(No = add it as a copy)"
 msgstr ""
 
 #: dailydeck/gui.py
 msgid "Use active window"
+msgstr ""
+
+#: dailydeck/gui.py
+msgid "Use it"
 msgstr ""
 
 #: dailydeck/gui.py
@@ -609,6 +699,48 @@ msgstr ""
 msgid "system font"
 msgstr ""
 
+#: dailydeck/symbols.py
+msgid "Communication"
+msgstr ""
+
+#: dailydeck/symbols.py
+msgid "Development"
+msgstr ""
+
+#: dailydeck/symbols.py
+msgid "Editing"
+msgstr ""
+
+#: dailydeck/symbols.py
+msgid "Files"
+msgstr ""
+
+#: dailydeck/symbols.py
+msgid "Media"
+msgstr ""
+
+#: dailydeck/symbols.py
+msgid "Navigation"
+msgstr ""
+
+#: dailydeck/symbols.py
+msgid "Other"
+msgstr ""
+
+#: dailydeck/symbols.py
+msgid "System"
+msgstr ""
+
+#: dailydeck/sync.py
+#, python-brace-format
+msgid "Folder not found: {folder}"
+msgstr ""
+
+#: dailydeck/sync.py
+#, python-brace-format
+msgid "There is no configuration in {folder}."
+msgstr ""
+
 #: dailydeck/tray.py
 msgid "Automatic (active window)"
 msgstr ""
@@ -699,6 +831,18 @@ msgstr ""
 
 #: dailydeck/tray.py
 msgid "The icon in the top bar needs an AppIndicator extension for GNOME (package “gnome-shell-extension-appindicator”). The Stream Deck works anyway; settings are then available in the editor."
+msgstr ""
+
+#: dailydeck/tray.py
+#, python-brace-format
+msgid ""
+"The sync client left a conflicting copy of the configuration: {file}\n"
+"Compare it with config.toml and delete it afterwards."
+msgstr ""
+
+#: dailydeck/tray.py
+#, python-brace-format
+msgid "The sync folder {folder} is not reachable or has no configuration yet – using the configuration of this computer."
 msgstr ""
 
 #: dailydeck/data/default_config.toml

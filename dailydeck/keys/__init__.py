@@ -8,7 +8,7 @@ __all__ = ["Chord", "KeySender", "ShortcutError", "create_key_sender", "format_s
 
 def create_key_sender(name: str = "auto", layout: str | None = None, variant: str | None = None) -> KeySender:
     if name == "auto":
-        name = {"darwin": "quartz", "win32": "pynput"}.get(sys.platform, "uinput")
+        name = {"darwin": "quartz", "win32": "sendinput"}.get(sys.platform, "uinput")
     if name == "uinput":
         from .linux_uinput import UInputKeySender
 
@@ -17,8 +17,8 @@ def create_key_sender(name: str = "auto", layout: str | None = None, variant: st
         from .macos_quartz import QuartzKeySender
 
         return QuartzKeySender()
-    if name == "pynput":
-        from .pynput_sender import PynputKeySender
+    if name == "sendinput":
+        from .windows_sendinput import WindowsKeySender
 
-        return PynputKeySender()
+        return WindowsKeySender()
     raise ValueError(f"unknown key backend: {name}")

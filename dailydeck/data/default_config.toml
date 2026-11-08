@@ -10,7 +10,7 @@
 #              dailydeck --print-focus
 #   title  = optional regular expression on the window title
 #   default = true  -> used when no other profile matches
-#   icon   = optional own image instead of the app icon found automatically
+#   icon   = optional own image (or symbol, see below) instead of the app icon
 #   font   = optional own font for this profile, e.g. "Ubuntu:Bold"
 #
 # Keys (buttons) are assigned in order (top left to bottom right).
@@ -34,7 +34,9 @@
 #              f1–f24, print, menu, volumeup, volumedown, mute, playpause,
 #              nexttrack, prevtrack, plus, minus
 #   color      background colour of the key, text_color text colour
-#   icon       path to an image (relative to this file)
+#   icon       path to an image (relative to this file) or a built-in symbol
+#              drawn in the text colour, e.g. "symbol:play" (names from
+#              lucide.dev; the editor shows all of them under "Symbol …")
 #   font_size  maximum font size
 #
 # Profile names and labels are translated into your language when this file

@@ -54,6 +54,33 @@ jobs:
           path: dist/*.deb
           retention-days: 14
 
+  windows:
+    name: Windows tests & installer (unsigned)
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Inno Setup
+        run: choco install innosetup --no-progress -y
+      - name: Tests on Windows
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          pip install -e ".[dev]"
+          pytest -q
+      - name: Build and smoke-test the installer
+        shell: pwsh
+        run: |
+          $env:PYTHON = (Get-Command python).Source
+          ./scripts/build-windows.ps1
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows
+          path: dist/*-setup.exe
+          retention-days: 14
+
   macos:
     name: macOS app (unsigned)
     runs-on: macos-15

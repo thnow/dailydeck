@@ -2,6 +2,7 @@ import logging
 import queue
 import signal
 import threading
+import time
 from dataclasses import dataclass, replace
 from pathlib import Path
 
@@ -10,7 +11,7 @@ from StreamDeck.ImageHelpers import PILHelper
 from StreamDeck.Transport.Transport import TransportError
 
 from .appicons import find_app_icon
-from .config import Config, ConfigError, Profile, load_config
+from .config import Config, ConfigError, Profile, active_config_path, load_config, local_path
 from .focus import FocusUnavailable, WindowInfo, create_focus_provider
 from .i18n import _
 from .keys import KeySender, create_key_sender, format_shortcut
@@ -257,8 +258,10 @@ class Daemon:
     ``status`` let a UI (the tray icon) run it in a background thread.
     """
 
-    def __init__(self, config_path: Path):
+    def __init__(self, config_path: Path, follow: bool = False):
+        """``follow``: switch to wherever local.toml points (sync folder, or back to the local config)."""
         self.config_path = config_path
+        self.follow = follow
         self._stop = threading.Event()
         self._wake = threading.Event()
         self._lock = threading.Lock()
@@ -327,7 +330,8 @@ class Daemon:
         focus = create_focus_provider(s.focus_backend)
 
         stop = self._stop
-        mtime = config_path.stat().st_mtime
+        mtime = _mtimes(config_path)
+        next_follow = time.monotonic() + FOLLOW_SECONDS
         previews = PreviewWatcher()
         previewing = False
         controller = None
@@ -364,8 +368,15 @@ class Daemon:
                     with self._lock:
                         paused, pinned = self._paused, self._pinned
 
-                    new_mtime = config_path.stat().st_mtime
-                    if new_mtime != mtime:
+                    if self.follow and time.monotonic() >= next_follow:
+                        next_follow = time.monotonic() + FOLLOW_SECONDS
+                        target = active_config_path()
+                        if target != config_path:
+                            log.info("configuration moved to %s", target)
+                            config_path = self.config_path = target
+                            mtime = None
+                    new_mtime = _mtimes(config_path)
+                    if new_mtime != mtime and new_mtime[0] is not None:
                         mtime = new_mtime
                         try:
                             config = load_config(config_path)
@@ -424,8 +435,22 @@ class Daemon:
         return 0
 
 
-def run(config_path: Path) -> int:
-    daemon = Daemon(config_path)
+FOLLOW_SECONDS = 2.0
+
+
+def _mtimes(config_path: Path) -> tuple[int | None, int | None]:
+    """Modification times of the config and local.toml (None while missing, e.g. during a sync)."""
+    def mtime(path: Path) -> int | None:
+        try:
+            return path.stat().st_mtime_ns
+        except OSError:
+            return None
+
+    return mtime(config_path), mtime(local_path())
+
+
+def run(config_path: Path, follow: bool = False) -> int:
+    daemon = Daemon(config_path, follow)
     signal.signal(signal.SIGTERM, lambda *_: daemon.stop())
     signal.signal(signal.SIGINT, lambda *_: daemon.stop())
     return daemon.run()

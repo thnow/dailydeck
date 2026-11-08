@@ -3,6 +3,7 @@ import logging
 import time
 from pathlib import Path
 
+from . import __version__
 from .config import ConfigError, default_config_path, load_config, setup_language
 from .i18n import _
 
@@ -14,6 +15,7 @@ def main() -> int:
     )
     parser.add_argument("-c", "--config", type=Path, help="config file (default: ~/.config/dailydeck/config.toml)")
     parser.add_argument("-v", "--verbose", action="store_true", help="debug logging")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--print-focus", action="store_true",
                       help="print the focused window's ids and title whenever they change (to write profiles)")
@@ -34,14 +36,15 @@ def main() -> int:
     setup_language(args.config.expanduser() if args.config else None)
     config_path = (args.config or default_config_path()).expanduser().resolve()
 
+    explicit = args.config.expanduser().resolve() if args.config else None  # else: follow local.toml
     if args.tray:
         from .tray import main as tray_main
 
-        return tray_main(config_path)
+        return tray_main(explicit)
     if args.gui:
         from .gui import main as gui_main
 
-        return gui_main(config_path)
+        return gui_main(explicit)
     if args.print_focus:
         return _print_focus()
     if args.dry_run:
@@ -51,7 +54,7 @@ def main() -> int:
 
     from .app import run
 
-    return run(config_path)
+    return run(config_path, follow=explicit is None)
 
 
 def _print_focus() -> int:

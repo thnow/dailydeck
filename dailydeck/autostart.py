@@ -13,8 +13,6 @@ import sys
 from pathlib import Path
 
 APP_ID = "dailydeck"
-# only present in a source checkout
-LAUNCHER = Path(__file__).resolve().parent.parent / "launch_tray.pyw"
 
 
 def _python() -> str:
@@ -28,13 +26,12 @@ def _python() -> str:
 
 def command() -> list[str]:
     """How to start the tray app, for this kind of installation."""
-    if getattr(sys, "frozen", False):  # PyInstaller build
+    if getattr(sys, "frozen", False):  # PyInstaller build (macOS app, Windows installer)
         return [sys.executable, "--tray"]
-    if LAUNCHER.exists():  # source checkout
-        return [_python(), str(LAUNCHER)]
-    if exe := shutil.which("dailydeck"):  # deb / pip
+    # deb / pip; not on Windows, where pip's dailydeck.exe would open a console window
+    if sys.platform != "win32" and (exe := shutil.which("dailydeck")):
         return [exe, "--tray"]
-    return [_python(), "-m", "dailydeck", "--tray"]
+    return [_python(), "-m", "dailydeck", "--tray"]  # source checkout (pip install -e) / Windows venv
 
 
 def _desktop_file() -> Path:
