@@ -100,7 +100,16 @@ Bug reports, profiles for more applications and translations are welcome.
 [CONTRIBUTING.md](CONTRIBUTING.md) covers the development setup,
 [docs/TRANSLATING.md](docs/TRANSLATING.md) how to add a language.
 
+## Thanks
+
+Daily Deck stands on the work of people who share their code freely: Qt and Qt for Python,
+Pillow, [python-elgato-streamdeck](https://github.com/abcminiuser/python-elgato-streamdeck),
+[hidapi](https://github.com/libusb/hidapi), the [Lucide](https://lucide.dev) and Feather icons,
+Python, PyInstaller and Inno Setup. Thank you – this tool would not exist without you.
+
 ## License
 
 [GPL-3.0-or-later](LICENSE). The key symbols come from [Lucide](https://lucide.dev)
-([ISC license](dailydeck/data/symbols/LICENSE)). Stream Deck is a trademark of Corsair Memory, Inc.
+([ISC license](dailydeck/data/symbols/LICENSE)). The Windows and macOS builds include third-party
+software; its licenses are in `THIRD-PARTY-NOTICES.txt` next to the program (in the app bundle:
+`Contents/Resources`). Stream Deck is a trademark of Corsair Memory, Inc.

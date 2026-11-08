@@ -27,6 +27,9 @@ and compiles [packaging/windows/dailydeck.iss](../packaging/windows/dailydeck.is
   an installation for all users. It closes a running Daily Deck before updating; uninstalling
   keeps the configuration in `%APPDATA%\dailydeck`.
 - The app logs to `%LOCALAPPDATA%\Daily Deck\dailydeck.log`.
+- `THIRD-PARTY-NOTICES.txt` in the program folder holds the licenses of everything bundled; it is
+  generated from the build environment by `scripts/third_party_notices.py`. License texts that
+  no package ships (LGPL-3.0 for Qt, hidapi) are kept in `packaging/licenses/`.
 - **Signing:** with `SIGN_COMMAND` set (e.g. a `signtool sign … {file}` call), the script signs
   both programs before packing them and then the setup. Unsigned, SmartScreen shows "Windows
   protected your PC" on the first start of the setup (*More info → Run anyway*).
