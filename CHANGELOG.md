@@ -5,6 +5,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follo
 
 ## [Unreleased]
 
+### Fixed
+- The Windows installer and the macOS app now include the licenses of the bundled third-party
+  software (`THIRD-PARTY-NOTICES.txt`: Qt/PySide6 under the LGPL, Python, Pillow, hidapi,
+  python-elgato-streamdeck, …), and the macOS app the GPL of Daily Deck itself.
+
 ## [0.3.0] – 2026-11-08
 
 ### Added

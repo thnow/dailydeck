@@ -109,6 +109,11 @@ DAILYDECK_MACOS_MIN=$MACOS_MIN \
     --workpath "$BUILD/work" --distpath "$DIST" packaging/macos/dailydeck.spec
 rm -rf "$DIST/Daily Deck"  # the onedir copy next to the .app
 
+echo "==> licenses"  # before signing: the signature seals Contents/Resources
+cp "$ROOT/LICENSE" "$APP/Contents/Resources/LICENSE.txt"
+"$PY" "$ROOT/scripts/third_party_notices.py" "$APP/Contents/Resources/THIRD-PARTY-NOTICES.txt"
+grep -q "GNU LESSER GENERAL PUBLIC LICENSE" "$APP/Contents/Resources/THIRD-PARTY-NOTICES.txt"
+
 echo "==> check: every binary runs on macOS $MACOS_MIN"
 too_new=0
 while IFS= read -r -d '' f; do
@@ -138,8 +143,10 @@ find "$APP/Contents" -type f \( -name '*.dylib' -o -name '*.so' -o -perm -u+x \)
 codesign --verify --deep --strict "$APP"
 
 echo "==> smoke test"
-"$APP/Contents/MacOS/Daily Deck" --dry-run "primary+shift+t"
-"$APP/Contents/MacOS/Daily Deck" --preview "$BUILD/preview" >/dev/null
+# the bundled default, never the configuration of whoever runs the build
+cp "$ROOT/dailydeck/data/default_config.toml" "$BUILD/smoke-config.toml"
+"$APP/Contents/MacOS/Daily Deck" -c "$BUILD/smoke-config.toml" --dry-run "primary+shift+t"
+"$APP/Contents/MacOS/Daily Deck" -c "$BUILD/smoke-config.toml" --preview "$BUILD/preview" >/dev/null
 ls "$BUILD/preview" | head -3
 
 echo "==> dmg"

@@ -52,6 +52,15 @@ these repository secrets:
 release is not code-signed yet: SmartScreen warns on the first start of the setup. Signing plugs
 in through `SIGN_COMMAND` (e.g. Azure Trusted Signing or a certificate with `signtool`).
 
+## Licenses in binary builds
+
+The Windows installer and the macOS app bundle third-party code. Both build scripts run
+`scripts/third_party_notices.py` with the build environment's Python; it writes
+`THIRD-PARTY-NOTICES.txt` from the license files of every installed package, Python's own
+license and the texts in `packaging/licenses/` (LGPL-3.0 for Qt, hidapi), and fails if a package
+ships no license file. A new runtime dependency is picked up automatically; a new bundled native
+library needs its license added there.
+
 ## Platforms
 
 | Target | Package | Status |

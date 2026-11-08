@@ -113,15 +113,24 @@ Run $Py -m PyInstaller --noconfirm --log-level WARN --workpath "$Build\work" --d
     "$Root\packaging\windows\dailydeck.spec"
 $App = "$Dist\Daily Deck"
 
+Step "third-party notices"
+Run $Py "$Root\scripts\third_party_notices.py" "$App\THIRD-PARTY-NOTICES.txt"
+
 Step "smoke test"
 $Cli = "$App\dailydeck.exe"
-Run $Cli --dry-run "primary+shift+t"
-Run $Cli --preview "$Build\preview" | Out-Null
+# the bundled default, never the configuration of whoever runs the build
+$SmokeConfig = "$Build\smoke-config.toml"
+Copy-Item "$Root\dailydeck\data\default_config.toml" $SmokeConfig
+Run $Cli "--config" $SmokeConfig --dry-run "primary+shift+t"
+Run $Cli "--config" $SmokeConfig --preview "$Build\preview" | Out-Null
 $Rendered = @(Get-ChildItem "$Build\preview" -Filter *.png).Count
 if ($Rendered -eq 0) { throw "preview rendered nothing" }
 Write-Host "    $Rendered preview images"
 if (-not (Test-Path "$App\_internal\dailydeck\data\win32\hidapi.dll")) { throw "hidapi.dll missing in the build" }
 if (-not (Test-Path "$App\_internal\dailydeck\data\symbols\play.png")) { throw "symbols missing in the build" }
+if (-not (Select-String -Path "$App\THIRD-PARTY-NOTICES.txt" -Pattern "GNU LESSER GENERAL PUBLIC LICENSE" -Quiet)) {
+    throw "third-party notices incomplete"
+}
 
 # Optional code signing: SIGN_COMMAND is e.g. a signtool or Azure Trusted Signing call in which
 # {file} is replaced by the file to sign. Without it Windows SmartScreen warns about an unknown publisher.
