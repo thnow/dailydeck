@@ -24,6 +24,11 @@ from dailydeck import __version__  # noqa: E402
 BUILD_TOOLS = {"pip", "setuptools", "wheel", "packaging", "pyinstaller", "pyinstaller-hooks-contrib", "altgraph",
                "pefile", "pywin32-ctypes", "macholib", "dailydeck"}
 
+# packages whose wheels carry no license file: name prefix -> text in packaging/licenses/
+FALLBACK_LICENSES = {
+    "pyobjc": "pyobjc-License.txt",  # MIT, from pyobjc-core/License.txt in the PyObjC repository
+}
+
 THANKS = """\
 Thank you
 =========
@@ -135,6 +140,11 @@ def main(output: Path) -> int:
         if license_name and len(license_name) < 200:
             parts.append(f"License: {license_name}\n\n")
         texts = license_files(dist)
+        if not texts:
+            fallback = next((f for prefix, f in FALLBACK_LICENSES.items() if name.lower().startswith(prefix)), None)
+            if fallback:
+                texts = [(f"{fallback} (from the project's repository)",
+                          (LICENSES / fallback).read_text(encoding="utf-8"))]
         for file_name, text in texts:
             parts += [f"--- {file_name}\n\n", text.strip(), "\n\n"]
         if name.lower().replace("_", "-") in ("pyside6-essentials", "pyside6", "shiboken6"):
