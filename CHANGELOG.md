@@ -5,6 +5,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follo
 
 ## [Unreleased]
 
+## [0.3.1] – 2026-11-08
+
 ### Added
 - Default profile for **Cyberpunk 2077** (Windows; Steam/Proton on Linux): map, journal,
   inventory, perks, crafting, quick save/load, vehicle, phone, photo mode and more, with the
