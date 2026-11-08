@@ -11,8 +11,8 @@ import sys
 from pathlib import Path
 
 from PIL import Image
-from PySide6.QtCore import QEvent, QMimeData, QObject, QPoint, Qt, QTimer, Signal
-from PySide6.QtGui import QAction, QColor, QDrag, QImage, QKeySequence, QPixmap
+from PySide6.QtCore import QEvent, QMimeData, QObject, QPoint, QSize, Qt, QTimer, Signal
+from PySide6.QtGui import QAction, QColor, QDrag, QIcon, QImage, QKeySequence, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -46,7 +46,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from . import i18n
+from . import i18n, symbols, sync
 from .config import (
     KEY_FIELDS,
     PLATFORM_LABELS,
@@ -56,10 +56,14 @@ from .config import (
     button_chords,
     current_platform,
     default_config_path,
+    is_shared,
     load_button,
+    local_path,
     parse_settings,
     read_config_data,
+    resolve_icon,
     setup_language,
+    sync_dir,
 )
 from .fonts import font_spec, list_fonts, split_spec
 from .i18n import N_, _
@@ -293,9 +297,82 @@ class ColorButton(QWidget):
         self._reset.setEnabled(self._color is not None)
 
 
+class SymbolDialog(QDialog):
+    """Grid of the built-in symbols (``symbol:name``), searchable and by category."""
+
+    def __init__(self, current: str | None = None, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(_("Choose symbol"))
+        self.resize(640, 520)
+        layout = QVBoxLayout(self)
+        top = QHBoxLayout()
+        self.search = QLineEdit(placeholderText=_("Search (English names, e.g. play, folder, arrow)"),
+                                clearButtonEnabled=True)
+        self.category = QComboBox()
+        self.category.addItem(_("All categories"), None)
+        for name in symbols.CATEGORIES:
+            self.category.addItem(_(name), name)
+        top.addWidget(self.search, 1)
+        top.addWidget(self.category)
+        layout.addLayout(top)
+
+        self.grid = QListWidget(viewMode=QListWidget.ViewMode.IconMode, movement=QListWidget.Movement.Static,
+                                resizeMode=QListWidget.ResizeMode.Adjust, uniformItemSizes=True)
+        self.grid.setIconSize(QSize(40, 40))
+        self.grid.setGridSize(QSize(64, 64))
+        # the symbols are white; show them on a key-like dark background
+        self.grid.setStyleSheet("QListWidget { background: #1e1e1e; } "
+                                "QListWidget::item:selected { background: #3daee9; border-radius: 6px; }")
+        for category, names in symbols.CATEGORIES.items():
+            for name in names:
+                path = symbols.symbol_path(name)
+                if not path.exists():
+                    continue
+                item = QListWidgetItem(QIcon(str(path)), "")
+                item.setToolTip(name)
+                item.setData(Qt.ItemDataRole.UserRole, name)
+                item.setData(Qt.ItemDataRole.UserRole + 1, category)
+                self.grid.addItem(item)
+                if current and symbols.symbol_path(current) == path:
+                    self.grid.setCurrentItem(item)
+        layout.addWidget(self.grid, 1)
+        self.name_label = QLabel()
+        layout.addWidget(self.name_label)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+        self._ok = buttons.button(QDialogButtonBox.StandardButton.Ok)
+
+        self.search.textChanged.connect(self._filter)
+        self.category.currentIndexChanged.connect(self._filter)
+        self.grid.currentItemChanged.connect(self._selected)
+        self.grid.itemDoubleClicked.connect(lambda _item: self.accept())
+        self._selected(self.grid.currentItem())
+        self.search.setFocus()
+
+    def _filter(self) -> None:
+        words = self.search.text().lower().split()
+        category = self.category.currentData()
+        for i in range(self.grid.count()):
+            item = self.grid.item(i)
+            name = item.data(Qt.ItemDataRole.UserRole)
+            in_category = category is None or item.data(Qt.ItemDataRole.UserRole + 1) == category
+            item.setHidden(not (in_category and all(w in name for w in words)))
+
+    def _selected(self, item) -> None:
+        self._ok.setEnabled(item is not None)
+        self.name_label.setText(item.data(Qt.ItemDataRole.UserRole) if item else "")
+
+    def value(self) -> str | None:
+        item = self.grid.currentItem()
+        return symbols.PREFIX + item.data(Qt.ItemDataRole.UserRole) if item else None
+
+
 class IconPicker(QWidget):
     """Image file chooser. Chosen files are copied into the config directory
-    so the config stays self-contained (and profiles can be exported)."""
+    so the config stays self-contained (and profiles can be exported).
+    A built-in symbol is stored as ``symbol:name``."""
 
     changed = Signal(object)
 
@@ -307,7 +384,8 @@ class IconPicker(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self._label = QLineEdit(readOnly=True, placeholderText=placeholder or _("no image"))
         layout.addWidget(self._label, 1)
-        layout.addWidget(QPushButton(_("Choose …"), clicked=self._pick))
+        layout.addWidget(QPushButton(_("Symbol …"), clicked=self._pick_symbol))
+        layout.addWidget(QPushButton(_("File …"), clicked=self._pick))
         self._reset = QToolButton(text="×", clicked=lambda: self._set(None, emit=True))
         layout.addWidget(self._reset)
         self._update()
@@ -327,6 +405,11 @@ class IconPicker(QWidget):
     def _update(self) -> None:
         self._label.setText(self._path or "")
         self._reset.setEnabled(self._path is not None)
+
+    def _pick_symbol(self) -> None:
+        dialog = SymbolDialog(self._path if symbols.is_symbol(self._path) else None, self)
+        if dialog.exec() and (value := dialog.value()):
+            self._set(value, emit=True)
 
     def _pick(self) -> None:
         file, _filter = QFileDialog.getOpenFileName(
@@ -670,6 +753,143 @@ class SettingsDialog(QDialog):
 
 # ------------------------------------------------------------------ main window
 
+def bring_to_front(window: QWidget) -> None:
+    """Show ``window`` in front, restoring it if minimized.
+
+    Windows keeps a background process (the tray) from taking the focus; Qt's
+    ``activateWindow`` then only flashes the taskbar button. Attaching to the
+    input of the current foreground window lifts that restriction.
+    """
+    if window.isMinimized():
+        window.setWindowState(window.windowState() & ~Qt.WindowState.WindowMinimized)
+    window.show()
+    window.raise_()
+    window.activateWindow()
+    if sys.platform == "win32":
+        import ctypes
+
+        user32, kernel32 = ctypes.windll.user32, ctypes.windll.kernel32
+        user32.GetForegroundWindow.restype = ctypes.c_void_p
+        user32.GetWindowThreadProcessId.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+        user32.SetForegroundWindow.argtypes = [ctypes.c_void_p]
+        user32.BringWindowToTop.argtypes = [ctypes.c_void_p]
+        hwnd = int(window.winId())
+        fg = user32.GetForegroundWindow()
+        if fg == hwnd:
+            return
+        own = kernel32.GetCurrentThreadId()
+        other = user32.GetWindowThreadProcessId(fg, None) if fg else 0
+        attached = bool(other and other != own and user32.AttachThreadInput(other, own, True))
+        try:
+            user32.BringWindowToTop(hwnd)
+            user32.SetForegroundWindow(hwnd)
+        finally:
+            if attached:
+                user32.AttachThreadInput(other, own, False)
+
+
+class SyncDialog(QDialog):
+    """Where the configuration lives: locally or in a synchronised folder."""
+
+    def __init__(self, window: "MainWindow"):
+        super().__init__(window)
+        self.window = window
+        self.setWindowTitle(_("Synchronisation"))
+        self.setMinimumWidth(560)
+        layout = QVBoxLayout(self)
+        intro = QLabel(_(
+            "Keep the profiles in a folder that Nextcloud, OneDrive, Syncthing or a Git repository "
+            "synchronises, and choose the same folder on your other computers.\n\n"
+            "Brightness, language, font and keyboard settings stay separate on each computer."))
+        intro.setWordWrap(True)
+        layout.addWidget(intro)
+        self.status = QLabel(textInteractionFlags=Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.status.setWordWrap(True)
+        self.status.setFrameShape(QFrame.Shape.StyledPanel)
+        self.status.setContentsMargins(8, 8, 8, 8)
+        layout.addWidget(self.status)
+        row = QHBoxLayout()
+        self.choose = QPushButton(_("Choose folder …"), clicked=self._choose)
+        self.local = QPushButton(_("Keep locally again"), clicked=self._disconnect)
+        row.addWidget(self.choose)
+        row.addWidget(self.local)
+        row.addStretch(1)
+        layout.addLayout(row)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close, rejected=self.reject)
+        layout.addWidget(buttons)
+        self._update()
+
+    def _update(self) -> None:
+        folder = sync_dir()
+        path = self.window.path
+        if folder is None:
+            text = _("The configuration is stored on this computer only:\n{path}").format(path=path)
+        elif is_shared(path):
+            text = _("Synchronised through the folder:\n{folder}").format(folder=folder)
+        else:
+            text = _("The sync folder {folder} has no configuration (yet) – maybe it is not synchronised "
+                     "yet. Until then the local configuration is used:\n{path}").format(folder=folder, path=path)
+        self.status.setText(text)
+        self.local.setEnabled(folder is not None)
+
+    def _ready(self) -> bool:
+        if not self.window.dirty:
+            return True
+        answer = QMessageBox.question(self, _("Synchronisation"), _("Save the changes first?"),
+                                      QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Cancel)
+        return answer == QMessageBox.StandardButton.Save and self.window.save()
+
+    def _choose(self) -> None:
+        if not self._ready():
+            return
+        start = str(sync_dir() or Path.home())
+        folder = QFileDialog.getExistingDirectory(self, _("Folder for the configuration"), start)
+        if not folder:
+            return
+        folder = Path(folder)
+        adopt = False
+        if existing := sync.existing_config(folder):
+            box = QMessageBox(QMessageBox.Icon.Question, _("Synchronisation"), _(
+                "There already is a configuration in this folder ({profiles} profiles, changed {time}), "
+                "e.g. from another computer.").format(
+                    profiles=existing.profiles if existing.profiles >= 0 else "?",
+                    time=sync.format_time(existing.modified)), parent=self)
+            use = box.addButton(_("Use it"), QMessageBox.ButtonRole.AcceptRole)
+            replace = box.addButton(_("Replace it with mine"), QMessageBox.ButtonRole.DestructiveRole)
+            box.addButton(QMessageBox.StandardButton.Cancel)
+            box.setDefaultButton(use)
+            box.exec()
+            if box.clickedButton() not in (use, replace):
+                return
+            adopt = box.clickedButton() is use
+        try:
+            self.window.switch_config(sync.connect(folder, self.window.path, adopt))
+        except (ConfigError, OSError) as e:
+            QMessageBox.critical(self, _("Synchronisation"), str(e))
+        self._update()
+
+    def _disconnect(self) -> None:
+        if not self._ready():
+            return
+        if QMessageBox.question(self, _("Synchronisation"), _(
+                "Copy the configuration to this computer and stop using the folder? "
+                "The folder and the other computers are not changed.")) != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            if is_shared(self.window.path):
+                self.window.switch_config(sync.disconnect(self.window.path))
+            else:  # the folder was never reached: just forget it
+                from .config import read_local, write_local
+
+                local = read_local()
+                local.pop("sync_dir", None)
+                local.pop("settings", None)
+                write_local(local)
+        except (ConfigError, OSError) as e:
+            QMessageBox.critical(self, _("Synchronisation"), str(e))
+        self._update()
+
+
 class MainWindow(QMainWindow):
     def __init__(self, path: Path):
         super().__init__()
@@ -892,6 +1112,7 @@ class MainWindow(QMainWindow):
             (_("Export profile …"), "Ctrl+E", self._export_profile),
             (None, None, None),
             (_("Settings …"), "Ctrl+,", self._settings),
+            (_("Synchronisation …"), None, lambda: SyncDialog(self).exec()),
             (None, None, None),
             (_("Quit"), QKeySequence.StandardKey.Quit, self.close),
         ):
@@ -899,7 +1120,8 @@ class MainWindow(QMainWindow):
                 menu.addSeparator()
                 continue
             action = QAction(text, self)
-            action.setShortcut(QKeySequence(shortcut))
+            if shortcut:
+                action.setShortcut(QKeySequence(shortcut))
             action.triggered.connect(slot)
             menu.addAction(action)
 
@@ -940,11 +1162,23 @@ class MainWindow(QMainWindow):
 
     # --- loading / saving ---------------------------------------------------
 
-    def _file_mtime(self) -> int | None:
+    def _file_mtime(self) -> tuple | None:
+        """Modification time of the config (and of local.toml, which holds part of a shared config)."""
         try:
-            return self.path.stat().st_mtime_ns
+            mtime = self.path.stat().st_mtime_ns
         except OSError:
             return None
+        try:
+            local = local_path().stat().st_mtime_ns if is_shared(self.path) else None
+        except OSError:
+            local = None
+        return mtime, local
+
+    def switch_config(self, path: Path) -> None:
+        """Continue with the configuration at ``path`` (moved to or from a sync folder)."""
+        self.path = path
+        self.load(keep_selection=True)
+        self.statusBar().showMessage(_("The configuration is now read from {path}.").format(path=path), 8000)
 
     def load(self, keep_selection: bool = False) -> None:
         row, page, slot = self.profile_list.currentRow(), self.page, self.slot
@@ -1241,8 +1475,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, _("Detect window"),
                                 _("Could not determine the active window:\n{error}").format(error=e))
             return
-        self.raise_()
-        self.activateWindow()
+        bring_to_front(self)
         if info.empty:
             self.statusBar().showMessage(_("No window detected."), 5000)
             return
@@ -1296,7 +1529,7 @@ class MainWindow(QMainWindow):
                 match=tuple(m.lower() for m in ([match] if isinstance(match, str) else match)),
                 color=profile_data.get("color"),
                 text_color=profile_data.get("text_color"),
-                icon=self.config_dir() / profile_data["icon"] if profile_data.get("icon") else None,
+                icon=resolve_icon(self.config_dir(), profile_data.get("icon")),
                 buttons=tuple(buttons),
             )
         per, pages, page = self._page_info()

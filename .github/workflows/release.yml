@@ -88,12 +88,33 @@ jobs:
           name: macos
           path: dist/*.dmg
 
-  # Future platform jobs (see docs/RELEASING.md) plug in here and upload their
+  windows:
+    name: Windows installer
+    needs: check
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Inno Setup
+        run: choco install innosetup --no-progress -y
+      - name: Build
+        shell: pwsh
+        run: |
+          $env:PYTHON = (Get-Command python).Source
+          ./scripts/build-windows.ps1
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows
+          path: dist/*-setup.exe
+
+  # Further platform jobs (see docs/RELEASING.md) plug in here and upload their
   # installers as artifacts; the release job below collects everything.
 
   release:
     name: GitHub release
-    needs: [python, deb, macos]
+    needs: [python, deb, macos, windows]
     runs-on: ubuntu-24.04
     permissions:
       contents: write

@@ -1,6 +1,7 @@
 import fnmatch
 import hashlib
 import json
+import logging
 import os
 import re
 import shutil
@@ -9,9 +10,12 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from . import symbols
 from .focus import WindowInfo
 from .i18n import _, pgettext
 from .keys import Chord, ShortcutError, parse_shortcut
+
+log = logging.getLogger(__name__)
 
 
 class ConfigError(Exception):
@@ -130,11 +134,126 @@ def _content_hash(path: Path) -> str:
     return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
+# ------------------------------------------------------------- sync folder
+#
+# The configuration can live in a folder synchronised by Nextcloud, Git, ... .
+# ``local.toml`` in the local config directory points to it and holds what
+# belongs to this computer only: the LOCAL_SETTINGS. When the config is shared,
+# these are read from and written to local.toml instead of config.toml.
+
+LOCAL_FILE = "local.toml"
+CONFIG_FILE = "config.toml"
+LOCAL_SETTINGS = ("brightness", "language", "font", "focus_backend", "key_backend",
+                  "keyboard_layout", "keyboard_variant", "poll_interval")
+_LOCAL_HEADER = ("# Daily Deck – settings of this computer only (not synchronised)\n"
+                 "# sync_dir: folder with the shared config.toml (Nextcloud, Git, ...)\n\n")
+
+
+def local_path() -> Path:
+    return config_dir() / LOCAL_FILE
+
+
+def read_local() -> dict:
+    """Contents of local.toml; empty if missing or unreadable."""
+    try:
+        with open(local_path(), "rb") as f:
+            data = tomllib.load(f)
+    except FileNotFoundError:
+        return {}
+    except (OSError, tomllib.TOMLDecodeError) as e:
+        log.warning("ignoring %s: %s", local_path(), e)
+        return {}
+    if not isinstance(data.get("settings", {}), dict):
+        data.pop("settings")
+    return data
+
+
+def write_local(data: dict) -> None:
+    import tempfile
+
+    import tomli_w
+
+    path = local_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    data = {k: v for k, v in data.items() if v not in (None, {}, "")}
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=".local-", suffix=".toml")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(_LOCAL_HEADER + tomli_w.dumps(data))
+        os.replace(tmp, path)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
+
+
+def sync_dir() -> Path | None:
+    """The configured sync folder (whether it is reachable or not)."""
+    value = read_local().get("sync_dir")
+    return Path(value).expanduser() if isinstance(value, str) and value.strip() else None
+
+
+def is_shared(path: Path) -> bool:
+    """Whether ``path`` is the config in the sync folder (local settings apply)."""
+    folder = sync_dir()
+    if folder is None:
+        return False
+    try:
+        return path.resolve() == (folder / CONFIG_FILE).resolve()
+    except OSError:
+        return False
+
+
+def split_local(data: dict) -> tuple[dict, dict]:
+    """(data without local settings, the local settings)."""
+    settings = dict(data.get("settings") or {})
+    local = {k: settings.pop(k) for k in LOCAL_SETTINGS if k in settings}
+    shared = dict(data)
+    if settings:
+        shared["settings"] = settings
+    else:
+        shared.pop("settings", None)
+    return shared, local
+
+
+def conflict_files(path: Path) -> list[Path]:
+    """Conflict copies of ``path`` left by sync tools (Nextcloud, Syncthing, Dropbox, OneDrive)."""
+    stem = path.stem.lower()
+    try:
+        candidates = list(path.parent.iterdir())
+    except OSError:
+        return []
+    return sorted(
+        f for f in candidates
+        if f != path and f.suffix.lower() == path.suffix.lower() and f.name.lower().startswith(stem)
+        and ("conflict" in f.name.lower() or f.name.lower().startswith(f"{stem}-{_hostname()}"))
+    )
+
+
+def _hostname() -> str:
+    import socket
+
+    return socket.gethostname().lower()
+
+
+def active_config_path() -> Path:
+    """Where the config is read from: the sync folder if set up and reachable, else locally.
+
+    Never creates anything in the sync folder – on a new computer the sync
+    client may not have downloaded the shared config yet."""
+    folder = sync_dir()
+    if folder is not None:
+        shared = folder / CONFIG_FILE
+        if shared.is_file():
+            return shared
+        log.warning("sync folder %s has no %s (yet); using the local configuration", folder, CONFIG_FILE)
+    return config_dir() / CONFIG_FILE
+
+
 def default_config_path() -> Path:
     """The user's config file; created from (or updated to) the bundled default.
 
     Call ``setup_language`` first, so a new file gets the user's language."""
-    user = config_dir() / "config.toml"
+    user = active_config_path()
     if not user.exists():
         user.parent.mkdir(parents=True, exist_ok=True)
         user.write_text(localized_default_config(), encoding="utf-8", newline="\n")
@@ -153,17 +272,27 @@ def setup_language(config_path: Path | None = None) -> str:
     """Activates the language from the config's settings (or the system's)."""
     from . import i18n
 
-    return i18n.setup_from_config(config_path or config_dir() / "config.toml")
+    path = config_path or active_config_path()
+    preferred = read_local().get("settings", {}).get("language") if is_shared(path) else None
+    if isinstance(preferred, str):
+        return i18n.setup(preferred)
+    return i18n.setup_from_config(path)
 
 
 def read_config_data(path: Path) -> dict:
+    """The config as stored; for the shared config, with this computer's local settings."""
     try:
         with open(path, "rb") as f:
-            return tomllib.load(f)
+            data = tomllib.load(f)
     except OSError as e:
         raise ConfigError(_("cannot read {file}: {error}").format(file=path, error=e)) from e
     except tomllib.TOMLDecodeError as e:
         raise ConfigError(f"{path}: {e}") from e
+    if is_shared(path):
+        local = {k: v for k, v in read_local().get("settings", {}).items() if k in LOCAL_SETTINGS}
+        if local:
+            data["settings"] = {**(data.get("settings") or {}), **local}
+    return data
 
 
 def load_config(path: Path) -> Config:
@@ -229,7 +358,7 @@ def load_profile(data: dict, index: int, base_dir: Path) -> Profile:
         default=bool(data.get("default", False)),
         color=data.get("color"),
         text_color=data.get("text_color"),
-        icon=_resolve(base_dir, data.get("icon")),
+        icon=resolve_icon(base_dir, data.get("icon")),
         font=data.get("font") or None,
         buttons=tuple(buttons),
     )
@@ -269,10 +398,15 @@ def load_button(data: dict, base_dir: Path) -> Button:
         chords=button_chords(data),
         color=data.get("color"),
         text_color=data.get("text_color"),
-        icon=_resolve(base_dir, data.get("icon")),
+        icon=resolve_icon(base_dir, data.get("icon")),
         font_size=data.get("font_size") or None,
     )
 
 
-def _resolve(base_dir: Path, path: str | None) -> Path | None:
-    return (base_dir / Path(path).expanduser()) if path else None
+def resolve_icon(base_dir: Path, path: str | None) -> Path | None:
+    """An ``icon`` value: a built-in ``symbol:name`` or a path relative to the config."""
+    if not path:
+        return None
+    if symbols.is_symbol(path):
+        return symbols.symbol_path(path)
+    return base_dir / Path(path).expanduser()

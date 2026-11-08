@@ -2,7 +2,8 @@
 
 Linux:   desktop file (by id or StartupWMClass) -> Icon= -> icon theme lookup.
 macOS:   bundle id -> .app bundle -> CFBundleIconFile (.icns).
-Windows: not implemented yet (returns None).
+Windows: exe name -> path of a running process (or the App Paths registry) ->
+         icon resource, extracted once to a PNG in the cache directory.
 """
 
 import ctypes
@@ -31,6 +32,8 @@ def find_app_icon(ids: Iterable[str]) -> Path | None:
             return _find_linux(tuple(ids))
         if sys.platform == "darwin":
             return _find_macos(tuple(ids))
+        if sys.platform == "win32":
+            return _find_windows(tuple(ids))
     except Exception:  # noqa: BLE001 - an icon is never worth crashing for
         log.exception("icon lookup failed for %s", ids)
     return None
@@ -277,3 +280,153 @@ def _find_macos(ids: tuple[str, ...]) -> Path | None:
             if path.exists():
                 return path
     return None
+
+
+# ------------------------------------------------------------------- Windows
+
+def _windows_cache_dir() -> Path:
+    base = Path(os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local")
+    return base / "dailydeck" / "icons"
+
+
+def _running_exe_paths() -> dict[str, str]:
+    """lower-case exe name -> full path, for the running processes we may query."""
+    from ctypes import wintypes
+
+    class PROCESSENTRY32W(ctypes.Structure):
+        _fields_ = [("dwSize", wintypes.DWORD), ("cntUsage", wintypes.DWORD), ("th32ProcessID", wintypes.DWORD),
+                    ("th32DefaultHeapID", ctypes.c_size_t), ("th32ModuleID", wintypes.DWORD),
+                    ("cntThreads", wintypes.DWORD), ("th32ParentProcessID", wintypes.DWORD),
+                    ("pcPriClassBase", wintypes.LONG), ("dwFlags", wintypes.DWORD),
+                    ("szExeFile", wintypes.WCHAR * 260)]
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
+    kernel32.OpenProcess.restype = wintypes.HANDLE
+    snapshot = kernel32.CreateToolhelp32Snapshot(0x2, 0)  # TH32CS_SNAPPROCESS
+    if not snapshot or snapshot == wintypes.HANDLE(-1).value:
+        return {}
+    paths: dict[str, str] = {}
+    try:
+        entry = PROCESSENTRY32W(dwSize=ctypes.sizeof(PROCESSENTRY32W))
+        ok = kernel32.Process32FirstW(snapshot, ctypes.byref(entry))
+        while ok:
+            name = entry.szExeFile.lower()
+            if name not in paths:
+                handle = kernel32.OpenProcess(0x1000, False, entry.th32ProcessID)  # QUERY_LIMITED_INFORMATION
+                if handle:
+                    size = wintypes.DWORD(1024)
+                    buf = ctypes.create_unicode_buffer(size.value)
+                    if kernel32.QueryFullProcessImageNameW(handle, 0, buf, ctypes.byref(size)):
+                        paths[name] = buf.value
+                    kernel32.CloseHandle(handle)
+            ok = kernel32.Process32NextW(snapshot, ctypes.byref(entry))
+    finally:
+        kernel32.CloseHandle(snapshot)
+    return paths
+
+
+def _app_paths(exe: str) -> str | None:
+    import winreg
+
+    for root in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+        try:
+            with winreg.OpenKey(root, rf"Software\Microsoft\Windows\CurrentVersion\App Paths\{exe}") as key:
+                value = os.path.expandvars(str(winreg.QueryValue(key, None))).strip('"')
+                if os.path.isfile(value):
+                    return value
+        except OSError:
+            continue
+    return None
+
+
+def _exe_path(ids: tuple[str, ...]) -> str | None:
+    exes = [i.lower() for i in ids if i.lower().endswith(".exe")]
+    if not exes:
+        return None
+    running = _running_exe_paths()
+    for exe in exes:
+        if path := running.get(exe) or _app_paths(exe):
+            return path
+    return None
+
+
+def _extract_exe_icon(exe: str, size: int = 256) -> Image.Image | None:
+    """The exe's main icon as RGBA image, ``size`` pixels square."""
+    from ctypes import wintypes
+
+    class ICONINFO(ctypes.Structure):
+        _fields_ = [("fIcon", wintypes.BOOL), ("xHotspot", wintypes.DWORD), ("yHotspot", wintypes.DWORD),
+                    ("hbmMask", wintypes.HBITMAP), ("hbmColor", wintypes.HBITMAP)]
+
+    class BITMAPINFOHEADER(ctypes.Structure):
+        _fields_ = [("biSize", wintypes.DWORD), ("biWidth", wintypes.LONG), ("biHeight", wintypes.LONG),
+                    ("biPlanes", wintypes.WORD), ("biBitCount", wintypes.WORD), ("biCompression", wintypes.DWORD),
+                    ("biSizeImage", wintypes.DWORD), ("biXPelsPerMeter", wintypes.LONG),
+                    ("biYPelsPerMeter", wintypes.LONG), ("biClrUsed", wintypes.DWORD),
+                    ("biClrImportant", wintypes.DWORD)]
+
+    user32 = ctypes.WinDLL("user32")
+    gdi32 = ctypes.WinDLL("gdi32")
+    user32.PrivateExtractIconsW.argtypes = [wintypes.LPCWSTR, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+                                            ctypes.POINTER(wintypes.HICON), ctypes.POINTER(wintypes.UINT),
+                                            wintypes.UINT, wintypes.UINT]
+    user32.PrivateExtractIconsW.restype = wintypes.UINT
+    user32.GetIconInfo.argtypes = [wintypes.HICON, ctypes.POINTER(ICONINFO)]
+    user32.DestroyIcon.argtypes = [wintypes.HICON]
+    user32.GetDC.restype = wintypes.HDC
+    user32.ReleaseDC.argtypes = [wintypes.HWND, wintypes.HDC]
+    gdi32.GetDIBits.argtypes = [wintypes.HDC, wintypes.HBITMAP, wintypes.UINT, wintypes.UINT, ctypes.c_void_p,
+                                ctypes.POINTER(BITMAPINFOHEADER), wintypes.UINT]
+    gdi32.DeleteObject.argtypes = [wintypes.HGDIOBJ]
+
+    hicon = wintypes.HICON()
+    icon_id = wintypes.UINT()
+    if user32.PrivateExtractIconsW(exe, 0, size, size, ctypes.byref(hicon), ctypes.byref(icon_id), 1, 0) != 1 \
+            or not hicon:
+        return None
+    info = ICONINFO()
+    hdc = user32.GetDC(None)
+    try:
+        if not user32.GetIconInfo(hicon, ctypes.byref(info)) or not info.hbmColor:
+            return None
+
+        def bits(bitmap) -> bytes:
+            header = BITMAPINFOHEADER(biSize=ctypes.sizeof(BITMAPINFOHEADER), biWidth=size, biHeight=-size,
+                                      biPlanes=1, biBitCount=32, biCompression=0)  # BI_RGB, top-down
+            buf = ctypes.create_string_buffer(size * size * 4)
+            if gdi32.GetDIBits(hdc, bitmap, 0, size, buf, ctypes.byref(header), 0) != size:
+                raise OSError("GetDIBits failed")
+            return buf.raw
+
+        image = Image.frombuffer("RGBA", (size, size), bits(info.hbmColor), "raw", "BGRA", 0, 1).copy()
+        if image.getchannel("A").getextrema() == (0, 0):  # icon without alpha channel: use the AND mask
+            mask = Image.frombuffer("RGBA", (size, size), bits(info.hbmMask), "raw", "BGRA", 0, 1)
+            image.putalpha(mask.convert("L").point(lambda v: 0 if v else 255))
+        return image
+    finally:
+        user32.ReleaseDC(None, hdc)
+        for bitmap in (info.hbmColor, info.hbmMask):
+            if bitmap:
+                gdi32.DeleteObject(bitmap)
+        user32.DestroyIcon(hicon)
+
+
+@functools.lru_cache(maxsize=256)
+def _find_windows(ids: tuple[str, ...]) -> Path | None:
+    import hashlib
+
+    exe = _exe_path(ids)
+    if exe is None:
+        return None
+    stat = os.stat(exe)
+    key = hashlib.sha1(f"{exe.lower()}|{stat.st_mtime_ns}|{stat.st_size}".encode()).hexdigest()[:16]
+    png = _windows_cache_dir() / f"{Path(exe).stem.lower()}-{key}.png"
+    if png.exists():
+        return png
+    image = _extract_exe_icon(exe)
+    if image is None:
+        return None
+    png.parent.mkdir(parents=True, exist_ok=True)
+    image.save(png)
+    return png

@@ -19,8 +19,9 @@ from pathlib import Path
 import tomli_w
 from PIL import Image
 
-from .config import ConfigError, load_profile, parse_config
+from .config import ConfigError, is_shared, load_profile, parse_config, read_local, split_local, write_local
 from .i18n import _
+from .symbols import is_symbol
 
 PROFILE_SUFFIX = ".dailydeck"
 FORMAT_NAME = "dailydeck-profile"
@@ -58,7 +59,17 @@ def save_config(data: dict, path: Path) -> None:
     """Validate and atomically write ``data``; keeps one ``.bak`` of the old file."""
     data = clean_config(data)
     parse_config(data, path)  # raises ConfigError
+    if is_shared(path):  # this computer's settings go to local.toml, not to the other computers
+        data, local_settings = split_local(data)
+        local = read_local()
+        local["settings"] = local_settings
+        write_local(local)
     text = CONFIG_HEADER + tomli_w.dumps(data)
+    try:
+        if path.read_text(encoding="utf-8") == text:
+            return  # unchanged: no needless upload by a sync client, no empty git diff
+    except (OSError, UnicodeDecodeError):
+        pass
     path.parent.mkdir(parents=True, exist_ok=True)
     backup = path.with_name(path.name + ".bak")
     if path.exists() and not backup.exists():
@@ -88,6 +99,8 @@ def export_profile(profile: dict, config_dir: Path, target: Path) -> None:
     def pack(rel: str | None) -> str | None:
         if not rel:
             return None
+        if is_symbol(rel):
+            return rel
         src = _resolve(config_dir, rel)
         if not src.is_file():
             return None
@@ -143,6 +156,8 @@ def import_profile(source: Path, config_dir: Path) -> dict:
             def unpack(name: str | None) -> str | None:
                 if not name:
                     return None
+                if is_symbol(name):
+                    return name
                 if name in extracted:
                     return extracted[name]
                 try:

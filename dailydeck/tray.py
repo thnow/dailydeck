@@ -13,7 +13,17 @@ from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QSystemTrayIcon
 
 from . import autostart, i18n, integration
 from .app import Daemon, DaemonStatus
-from .config import DATA_DIR, ConfigError, default_config_path, parse_settings, read_config_data, setup_language
+from .config import (
+    DATA_DIR,
+    ConfigError,
+    conflict_files,
+    default_config_path,
+    is_shared,
+    parse_settings,
+    read_config_data,
+    setup_language,
+    sync_dir,
+)
 from .i18n import _
 from .preview import runtime_dir
 from .profile_io import save_config
@@ -21,6 +31,20 @@ from .profile_io import save_config
 log = logging.getLogger(__name__)
 
 BRIGHTNESS_STEPS = (10, 25, 40, 60, 80, 100)
+
+
+def _windows_light_taskbar() -> bool:
+    """Whether the Windows taskbar uses the light theme (then a white icon would vanish)."""
+    if sys.platform != "win32":
+        return False
+    import winreg
+
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                            r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize") as key:
+            return bool(winreg.QueryValueEx(key, "SystemUsesLightTheme")[0])
+    except OSError:
+        return False
 
 
 def make_tray_icon(dimmed: bool = False) -> QIcon:
@@ -35,7 +59,7 @@ def make_tray_icon(dimmed: bool = False) -> QIcon:
         p = QPainter(pixmap)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
         color = QColor(255, 255, 255, 110 if dimmed else 255)
-        if sys.platform == "darwin":
+        if sys.platform == "darwin" or _windows_light_taskbar():
             color = QColor(0, 0, 0, 110 if dimmed else 255)
         pen_w = max(1.0, size / 14)
         p.setPen(color)
@@ -64,15 +88,15 @@ def make_tray_icon(dimmed: bool = False) -> QIcon:
 
 
 class TrayApp(QObject):
-    def __init__(self, app: QApplication, config_path: Path):
+    def __init__(self, app: QApplication, config_path: Path, follow: bool = False):
         super().__init__()
         self.app = app
-        self.config_path = config_path
         self.editor = None
+        self._reported: set[str] = set()  # sync problems already shown
         self._last: DaemonStatus | None = None
         self._profile_names: tuple[str, ...] | None = None
 
-        self.daemon = Daemon(config_path)
+        self.daemon = Daemon(config_path, follow)
         self.thread = threading.Thread(target=self._run_daemon, name="daemon", daemon=True)
         self.thread.start()
 
@@ -86,6 +110,30 @@ class TrayApp(QObject):
         self.timer = QTimer(self, interval=500, timeout=self.refresh)
         self.timer.start()
         self.refresh()
+        self.sync_timer = QTimer(self, interval=30_000, timeout=self.check_sync)
+        self.sync_timer.start()
+        QTimer.singleShot(5000, self.check_sync)
+
+    @property
+    def config_path(self) -> Path:
+        """The config in use; the daemon follows it into (and out of) a sync folder."""
+        return self.daemon.config_path
+
+    def check_sync(self) -> None:
+        """Report conflict copies left by the sync client, and an unreachable sync folder."""
+        messages = []
+        folder = sync_dir()
+        if folder is not None and not is_shared(self.config_path):
+            messages.append(_("The sync folder {folder} is not reachable or has no configuration yet – "
+                              "using the configuration of this computer.").format(folder=folder))
+        if folder is not None:
+            for conflict in conflict_files(self.config_path):
+                messages.append(_("The sync client left a conflicting copy of the configuration: {file}\n"
+                                  "Compare it with config.toml and delete it afterwards.").format(file=conflict))
+        for message in messages:
+            if message not in self._reported:
+                self._reported.add(message)
+                _notify(self, message)
 
     def _run_daemon(self) -> None:
         try:
@@ -237,13 +285,11 @@ class TrayApp(QObject):
             self.open_editor(new_for=(st.app_name, st.app_ids))
 
     def open_editor(self, profile: str | None = None, new_for=None) -> None:
-        from .gui import MainWindow
+        from .gui import MainWindow, bring_to_front
 
         if self.editor is None or not self.editor.isVisible():
             self.editor = MainWindow(self.config_path)
-        self.editor.show()
-        self.editor.raise_()
-        self.editor.activateWindow()
+        bring_to_front(self.editor)
         if profile:
             self.editor.select_profile(profile)
         elif new_for:
@@ -333,7 +379,7 @@ def main(config_path: Path | None = None) -> int:
         return 0
 
     path = (config_path or default_config_path()).expanduser().resolve()
-    tray = TrayApp(app, path)
+    tray = TrayApp(app, path, follow=config_path is None)
     QTimer.singleShot(1000, lambda: check_desktop_integration(tray))
 
     # let Ctrl+C / SIGTERM end the Qt loop cleanly

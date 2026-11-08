@@ -55,6 +55,10 @@ msgid "Add page"
 msgstr "Seite hinzufügen"
 
 #: dailydeck/gui.py
+msgid "All categories"
+msgstr "Alle Kategorien"
+
+#: dailydeck/gui.py
 msgid "App icon"
 msgstr "Programmicon"
 
@@ -67,12 +71,16 @@ msgid "Choose colour"
 msgstr "Farbe wählen"
 
 #: dailydeck/gui.py
+msgid "Choose folder …"
+msgstr "Ordner wählen …"
+
+#: dailydeck/gui.py
 msgid "Choose image"
 msgstr "Bild wählen"
 
 #: dailydeck/gui.py
-msgid "Choose …"
-msgstr "Wählen …"
+msgid "Choose symbol"
+msgstr "Symbol wählen"
 
 #: dailydeck/gui.py
 msgid "Clear key"
@@ -85,6 +93,10 @@ msgstr "Farben"
 #: dailydeck/gui.py
 msgid "Configuration"
 msgstr "Konfiguration"
+
+#: dailydeck/gui.py
+msgid "Copy the configuration to this computer and stop using the folder? The folder and the other computers are not changed."
+msgstr "Die Konfiguration auf diesen Rechner kopieren und den Ordner nicht mehr verwenden? Der Ordner und die anderen Rechner bleiben unverändert."
 
 #: dailydeck/gui.py
 #, python-brace-format
@@ -196,8 +208,16 @@ msgid "File changed"
 msgstr "Datei geändert"
 
 #: dailydeck/gui.py
+msgid "File …"
+msgstr "Datei …"
+
+#: dailydeck/gui.py
 msgid "Flash on switch"
 msgstr "Aufblitzen beim Wechsel"
+
+#: dailydeck/gui.py
+msgid "Folder for the configuration"
+msgstr "Ordner für die Konfiguration"
 
 #: dailydeck/gui.py
 msgid "Font"
@@ -250,6 +270,20 @@ msgstr "Profil importieren …"
 #: dailydeck/gui.py
 msgid "Import …"
 msgstr "Importieren …"
+
+#: dailydeck/gui.py
+msgid "Keep locally again"
+msgstr "Wieder lokal speichern"
+
+#: dailydeck/gui.py
+msgid ""
+"Keep the profiles in a folder that Nextcloud, OneDrive, Syncthing or a Git repository synchronises, and choose the same folder on your other computers.\n"
+"\n"
+"Brightness, language, font and keyboard settings stay separate on each computer."
+msgstr ""
+"Lege die Profile in einen Ordner, den Nextcloud, OneDrive, Syncthing oder ein Git-Repository synchronisiert, und wähle auf deinen anderen Rechnern denselben Ordner.\n"
+"\n"
+"Helligkeit, Sprache, Schrift und Tastatureinstellungen bleiben auf jedem Rechner eigenständig."
 
 #: dailydeck/gui.py
 msgid "Key"
@@ -376,6 +410,10 @@ msgid "Reload"
 msgstr "Neu laden"
 
 #: dailydeck/gui.py
+msgid "Replace it with mine"
+msgstr "Durch meine ersetzen"
+
+#: dailydeck/gui.py
 msgid "Reset"
 msgstr "Zurücksetzen"
 
@@ -388,8 +426,16 @@ msgid "Save changes?"
 msgstr "Änderungen speichern?"
 
 #: dailydeck/gui.py
+msgid "Save the changes first?"
+msgstr "Erst die Änderungen speichern?"
+
+#: dailydeck/gui.py
 msgid "Saved – the deck picks up the changes right away."
 msgstr "Gespeichert – das Deck übernimmt die Änderungen sofort."
+
+#: dailydeck/gui.py
+msgid "Search (English names, e.g. play, folder, arrow)"
+msgstr "Suche (englische Namen, z. B. play, folder, arrow)"
 
 #: dailydeck/gui.py
 msgid "Search fonts …"
@@ -435,6 +481,27 @@ msgid "Switch windows … {seconds}"
 msgstr "Fenster wechseln … {seconds}"
 
 #: dailydeck/gui.py
+msgid "Symbol …"
+msgstr "Symbol …"
+
+#: dailydeck/gui.py
+msgid "Synchronisation"
+msgstr "Synchronisation"
+
+#: dailydeck/gui.py
+msgid "Synchronisation …"
+msgstr "Synchronisation …"
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid ""
+"Synchronised through the folder:\n"
+"{folder}"
+msgstr ""
+"Synchronisiert über den Ordner:\n"
+"{folder}"
+
+#: dailydeck/gui.py
 #, python-brace-format
 msgid "System language ({language})"
 msgstr "Systemsprache ({language})"
@@ -463,6 +530,20 @@ msgstr ""
 "{error}"
 
 #: dailydeck/gui.py
+#, python-brace-format
+msgid "The configuration is now read from {path}."
+msgstr "Die Konfiguration wird jetzt aus {path} gelesen."
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid ""
+"The configuration is stored on this computer only:\n"
+"{path}"
+msgstr ""
+"Die Konfiguration liegt nur auf diesem Rechner:\n"
+"{path}"
+
+#: dailydeck/gui.py
 msgid "The configuration was changed outside the editor (e.g. from the tray menu)."
 msgstr "Die Konfiguration wurde außerhalb des Editors geändert (z. B. über die Leiste)."
 
@@ -483,6 +564,20 @@ msgstr "Konfiguration wurde außerhalb geändert – neu geladen."
 #: dailydeck/gui.py
 #, python-brace-format
 msgid ""
+"The sync folder {folder} has no configuration (yet) – maybe it is not synchronised yet. Until then the local configuration is used:\n"
+"{path}"
+msgstr ""
+"Im Sync-Ordner {folder} liegt (noch) keine Konfiguration – vielleicht ist er noch nicht synchronisiert. Bis dahin wird die lokale Konfiguration verwendet:\n"
+"{path}"
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid "There already is a configuration in this folder ({profiles} profiles, changed {time}), e.g. from another computer."
+msgstr "In diesem Ordner liegt bereits eine Konfiguration ({profiles} Profile, geändert {time}), z. B. von einem anderen Rechner."
+
+#: dailydeck/gui.py
+#, python-brace-format
+msgid ""
 "There is already a profile “{name}”. Replace it?\n"
 "(No = add it as a copy)"
 msgstr ""
@@ -492,6 +587,10 @@ msgstr ""
 #: dailydeck/gui.py
 msgid "Use active window"
 msgstr "Aktives Fenster übernehmen"
+
+#: dailydeck/gui.py
+msgid "Use it"
+msgstr "Übernehmen"
 
 #: dailydeck/gui.py
 msgid "Window title"
@@ -619,6 +718,48 @@ msgstr "{file}: ungültige Profildatei ({error})"
 msgid "system font"
 msgstr "Systemschrift"
 
+#: dailydeck/symbols.py
+msgid "Communication"
+msgstr "Kommunikation"
+
+#: dailydeck/symbols.py
+msgid "Development"
+msgstr "Entwicklung"
+
+#: dailydeck/symbols.py
+msgid "Editing"
+msgstr "Bearbeiten"
+
+#: dailydeck/symbols.py
+msgid "Files"
+msgstr "Dateien"
+
+#: dailydeck/symbols.py
+msgid "Media"
+msgstr "Medien"
+
+#: dailydeck/symbols.py
+msgid "Navigation"
+msgstr "Navigation"
+
+#: dailydeck/symbols.py
+msgid "Other"
+msgstr "Sonstiges"
+
+#: dailydeck/symbols.py
+msgid "System"
+msgstr "System"
+
+#: dailydeck/sync.py
+#, python-brace-format
+msgid "Folder not found: {folder}"
+msgstr "Ordner nicht gefunden: {folder}"
+
+#: dailydeck/sync.py
+#, python-brace-format
+msgid "There is no configuration in {folder}."
+msgstr "In {folder} liegt keine Konfiguration."
+
 #: dailydeck/tray.py
 msgid "Automatic (active window)"
 msgstr "Automatisch (aktives Fenster)"
@@ -713,6 +854,20 @@ msgstr "Autostart nicht geändert: {error}"
 #: dailydeck/tray.py
 msgid "The icon in the top bar needs an AppIndicator extension for GNOME (package “gnome-shell-extension-appindicator”). The Stream Deck works anyway; settings are then available in the editor."
 msgstr "Für das Symbol in der oberen Leiste fehlt eine AppIndicator-Erweiterung für GNOME (Paket „gnome-shell-extension-appindicator“). Das Stream Deck funktioniert trotzdem; Einstellungen gibt es dann im Editor."
+
+#: dailydeck/tray.py
+#, python-brace-format
+msgid ""
+"The sync client left a conflicting copy of the configuration: {file}\n"
+"Compare it with config.toml and delete it afterwards."
+msgstr ""
+"Der Sync-Client hat eine Konfliktkopie der Konfiguration angelegt: {file}\n"
+"Vergleiche sie mit config.toml und lösche sie danach."
+
+#: dailydeck/tray.py
+#, python-brace-format
+msgid "The sync folder {folder} is not reachable or has no configuration yet – using the configuration of this computer."
+msgstr "Der Sync-Ordner {folder} ist nicht erreichbar oder enthält noch keine Konfiguration – verwendet wird die Konfiguration dieses Rechners."
 
 #: dailydeck/data/default_config.toml
 msgctxt "default config"

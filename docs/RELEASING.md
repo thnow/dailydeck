@@ -2,9 +2,9 @@
 
 ```
 push / pull request ─▶ CI: version check · i18n check · ruff · pytest (Python 3.11, 3.14)
-                           · Ubuntu package · macOS app (unsigned)
+                           · Ubuntu package · macOS app (unsigned) · Windows tests + installer
 
-tag v1.2.3 ─▶ Release: tag = version? ─▶ wheel + sdist · .deb · signed, notarized .dmg
+tag v1.2.3 ─▶ Release: tag = version? ─▶ wheel + sdist · .deb · signed, notarized .dmg · setup.exe
                                          ─▶ SHA256SUMS ─▶ GitHub release (notes from CHANGELOG.md)
 ```
 
@@ -45,13 +45,21 @@ these repository secrets:
 | `MACOS_CERTIFICATE_P12`, `MACOS_CERTIFICATE_PASSWORD` | Developer ID Application certificate with key (base64) |
 | `MACOS_NOTARY_KEY_P8`, `MACOS_NOTARY_KEY_ID`, `MACOS_NOTARY_ISSUER` | App Store Connect API key (base64), role Developer |
 
+## Windows
+
+`scripts/build-windows.ps1` builds the programs with PyInstaller and
+`DailyDeck-<version>-windows-x64-setup.exe` with Inno Setup; see [WINDOWS.md](WINDOWS.md). The
+release is not code-signed yet: SmartScreen warns on the first start of the setup. Signing plugs
+in through `SIGN_COMMAND` (e.g. Azure Trusted Signing or a certificate with `signtool`).
+
 ## Platforms
 
 | Target | Package | Status |
 |---|---|---|
 | Ubuntu 26.04 | `.deb` | released |
 | macOS 12+, Apple Silicon | signed, notarized `.dmg` | released |
-| Windows 10/11 | PyInstaller + Inno Setup installer | backends written, untested |
+| Windows 10/11, x64 | Inno Setup installer (unsigned) | released |
+| Windows | code signing, winget package | planned |
 | macOS, Intel | second build or universal2 | planned |
 | Debian, Fedora, Arch | same `debian/`, RPM spec, AUR | planned |
 | Launchpad PPA | automatic updates via apt | planned |

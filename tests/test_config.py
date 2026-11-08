@@ -68,7 +68,7 @@ def test_untouched_old_default_is_updated(tmp_path, monkeypatch, version):
 
     fixture = Path(__file__).parent / "data" / f"default_config-{version}.toml"
     assert config._content_hash(fixture) in config.PREVIOUS_DEFAULTS
-    old = fixture.read_bytes()
+    old = fixture.read_bytes().replace(b"\r\n", b"\n")  # the fixture itself may be checked out with CRLF
     monkeypatch.setattr(config, "config_dir", lambda: tmp_path)
     user = tmp_path / "config.toml"
     user.write_bytes(old.replace(b"\n", b"\r\n"))  # as checked out on Windows

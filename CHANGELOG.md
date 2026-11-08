@@ -6,6 +6,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follo
 ## [Unreleased]
 
 ### Added
+- **Windows support** with an installer (`DailyDeck-<version>-windows-x64-setup.exe`, no admin
+  rights needed, optional start at sign-in): focus detection including Store apps, key presses
+  through `SendInput` following the keyboard layout of the focused window, app icons from the
+  program file, a tray icon for light and dark taskbars. `dailydeck.exe` is the command line tool.
+- `dailydeck --version`.
+- About 180 built-in key symbols (play, pause, stop, volume, copy, git, …) from
+  [Lucide](https://lucide.dev): *Symbol …* in the editor or `icon = "symbol:play"`. They take the
+  key's text colour.
+- Synchronise the profiles between computers through a folder (Nextcloud, OneDrive, Syncthing,
+  Git): *File → Synchronisation* in the editor. Brightness, language, font and keyboard settings
+  stay local; conflict copies of sync clients are reported in the tray.
 - English and German user interface, messages and default profiles. The language follows the
   system and can be set under Settings → Language. New languages are a single `.po` file, no
   build step – see [docs/TRANSLATING.md](docs/TRANSLATING.md).
@@ -14,6 +25,9 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follo
 
 ### Changed
 - Documentation in English.
+
+### Fixed
+- The editor comes to the front when opened from the tray while minimized or behind other windows.
 
 ## [0.2.0] – 2026-11-05
 
