@@ -3,7 +3,7 @@
 import os
 import sys
 
-__version__ = "0.3.1"
+__version__ = "0.4.0"
 
 if sys.platform == "win32":
     # python-elgato-streamdeck finds hidapi.dll via ctypes.util.find_library, which searches PATH.

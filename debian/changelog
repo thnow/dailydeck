@@ -1,3 +1,9 @@
+dailydeck (0.4.0) resolute; urgency=medium
+
+  * New upstream release, see CHANGELOG.md.
+
+ -- Thomas Wittmann <nowotny.thomas@gmail.com>  Wed, 25 Nov 2026 18:17:55 +0100
+
 dailydeck (0.3.1) resolute; urgency=medium
 
   * New upstream release, see CHANGELOG.md.
