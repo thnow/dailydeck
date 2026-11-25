@@ -8,6 +8,7 @@ from PIL import Image
 
 from .appicons import find_app_icon, load_icon
 from .config import Button, Profile, Settings
+from .i18n import _, pgettext
 from .keys import format_shortcut
 from .render import deck_backdrop, render_key
 
@@ -60,6 +61,17 @@ def backdrop_tiles(icon: Path | None, cols: int, rows: int, key_size: tuple[int,
     return tuple(deck_backdrop(image, cols, rows, key_size, spacing))
 
 
+def button_badge(button: Button) -> str:
+    """Corner marker for buttons that are not a short tap."""
+    if button.hold_while_pressed:
+        # corner marker of a key that stays pressed while the deck key is held (about 7 characters)
+        return pgettext("key badge", "hold")
+    if button.hold > 0:
+        seconds = f"{button.hold:g}".replace(".", pgettext("decimal separator", "."))
+        return _("{seconds} s").format(seconds=seconds)
+    return ""
+
+
 def render_slot(
     slot: Slot,
     profile: Profile | None,
@@ -79,6 +91,7 @@ def render_slot(
             key_size,
             label=slot.label,
             hint=format_shortcut(slot.chords) if s.show_keys and slot.chords else "",
+            badge=button_badge(slot) if slot.chords else "",
             background=slot.color or profile_bg,
             text_color=slot.text_color or (None if slot.color else profile_fg),
             icon=slot.icon,

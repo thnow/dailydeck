@@ -30,6 +30,11 @@ msgstr "{file} lässt sich nicht lesen: {error}"
 
 #: dailydeck/config.py
 #, python-brace-format
+msgid "hold must be a number of seconds between 0 and {max}, not {value}"
+msgstr "hold muss eine Anzahl Sekunden zwischen 0 und {max} sein, nicht {value}"
+
+#: dailydeck/config.py
+#, python-brace-format
 msgid "profile “{name}”, key {number} (“{label}”): {error}"
 msgstr "Profil „{name}“, Taste {number} („{label}“): {error}"
 
@@ -228,8 +233,20 @@ msgid "Font size"
 msgstr "Schriftgröße"
 
 #: dailydeck/gui.py
+msgid "For games: how long the keys stay pressed"
+msgstr "Für Spiele: wie lange die Tasten gedrückt bleiben"
+
+#: dailydeck/gui.py
 msgid "Gap between the keys of the device, so the icon looks continuous"
 msgstr "Abstand zwischen den Tasten am Gerät, damit das Icon durchgehend wirkt"
+
+#: dailydeck/gui.py
+msgid "Hold for a fixed time"
+msgstr "Feste Dauer halten"
+
+#: dailydeck/gui.py
+msgid "Hold while the deck key is pressed"
+msgstr "Halten, solange die Deck-Taste gedrückt ist"
 
 #: dailydeck/gui.py
 msgid "How long the icon lights up at full brightness after switching apps; 0 = off"
@@ -296,6 +313,10 @@ msgstr "Taste  –  oben eine Taste anklicken"
 #: dailydeck/gui.py
 msgid "Key opacity"
 msgstr "Deckkraft der Tasten"
+
+#: dailydeck/gui.py
+msgid "Key press"
+msgstr "Tastendruck"
 
 #: dailydeck/gui.py
 msgid "Key spacing on the device"
@@ -453,6 +474,10 @@ msgstr "Einstellungen"
 #: dailydeck/gui.py
 msgid "Settings …"
 msgstr "Einstellungen …"
+
+#: dailydeck/gui.py
+msgid "Short tap"
+msgstr "Kurz antippen"
 
 #: dailydeck/gui.py
 msgid "Shortcut"
@@ -693,6 +718,11 @@ msgstr "unbekannte Taste „{key}“ in „{shortcut}“"
 msgid "unknown modifier “{modifier}” in “{shortcut}”"
 msgstr "unbekannter Modifier „{modifier}“ in „{shortcut}“"
 
+#: dailydeck/layout.py
+#, python-brace-format
+msgid "{seconds} s"
+msgstr "{seconds} s"
+
 #: dailydeck/profile_io.py
 msgid "not a Daily Deck profile file"
 msgstr "keine Daily-Deck-Profildatei"
@@ -868,6 +898,11 @@ msgstr ""
 #, python-brace-format
 msgid "The sync folder {folder} is not reachable or has no configuration yet – using the configuration of this computer."
 msgstr "Der Sync-Ordner {folder} ist nicht erreichbar oder enthält noch keine Konfiguration – verwendet wird die Konfiguration dieses Rechners."
+
+#: dailydeck/layout.py
+msgctxt "decimal separator"
+msgid "."
+msgstr ","
 
 #: dailydeck/data/default_config.toml
 msgctxt "default config"
@@ -1368,3 +1403,8 @@ msgstr "Zoom 100%"
 msgctxt "default config"
 msgid "Zoom −"
 msgstr "Zoom −"
+
+#: dailydeck/layout.py
+msgctxt "key badge"
+msgid "hold"
+msgstr "halten"

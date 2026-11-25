@@ -11,15 +11,12 @@ for those, run Daily Deck as administrator too.
 
 import ctypes
 import logging
-import time
 from ctypes import wintypes
 
 from .base import KeySender
 from .parse import Chord
 
 log = logging.getLogger(__name__)
-
-KEY_DELAY = 0.012
 
 INPUT_KEYBOARD = 1
 KEYEVENTF_EXTENDEDKEY = 0x0001
@@ -90,6 +87,7 @@ class WindowsKeySender(KeySender):
     name = "sendinput"
 
     def __init__(self):
+        super().__init__()
         user32 = ctypes.WinDLL("user32", use_last_error=True)
         user32.GetForegroundWindow.restype = wintypes.HWND
         user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
@@ -146,18 +144,16 @@ class WindowsKeySender(KeySender):
             parts.append("+".join(f"vk{vk:#04x}" for vk, _scan, _ext in self.resolve(chord, hkl)))
         return " ".join(parts) + f"  [layout {hkl & 0xFFFFFFFF:08x}]"
 
-    def send(self, chords: tuple[Chord, ...]) -> None:
-        hkl = self._layout()
-        for chord in chords:
-            keys = self.resolve(chord, hkl)
-            for key in keys:
-                self._send(*key, down=True)
-            for key in reversed(keys):
-                self._send(*key, down=False)
+    def _sequence(self, chords: tuple[Chord, ...]) -> list[list[tuple[int, int, bool]]]:
+        hkl = self._layout()  # once per shortcut
+        return [self.resolve(chord, hkl) for chord in chords]
 
-    def _send(self, vk: int, scan: int, extended: bool, down: bool) -> None:
+    def _emit(self, key: tuple[int, int, bool], down: bool) -> None:
+        vk, scan, extended = key
         flags = (KEYEVENTF_EXTENDEDKEY if extended else 0) | (0 if down else KEYEVENTF_KEYUP)
         event = INPUT(type=INPUT_KEYBOARD, u=_INPUTUNION(ki=KEYBDINPUT(wVk=vk, wScan=scan, dwFlags=flags)))
         if self._user32.SendInput(1, ctypes.byref(event), ctypes.sizeof(INPUT)) != 1:
             log.warning("SendInput failed (error %d)", ctypes.get_last_error())
-        time.sleep(KEY_DELAY)
+
+    def close(self) -> None:
+        self.release_all()

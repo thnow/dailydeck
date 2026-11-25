@@ -30,6 +30,11 @@ msgstr ""
 
 #: dailydeck/config.py
 #, python-brace-format
+msgid "hold must be a number of seconds between 0 and {max}, not {value}"
+msgstr ""
+
+#: dailydeck/config.py
+#, python-brace-format
 msgid "profile “{name}”, key {number} (“{label}”): {error}"
 msgstr ""
 
@@ -226,7 +231,19 @@ msgid "Font size"
 msgstr ""
 
 #: dailydeck/gui.py
+msgid "For games: how long the keys stay pressed"
+msgstr ""
+
+#: dailydeck/gui.py
 msgid "Gap between the keys of the device, so the icon looks continuous"
+msgstr ""
+
+#: dailydeck/gui.py
+msgid "Hold for a fixed time"
+msgstr ""
+
+#: dailydeck/gui.py
+msgid "Hold while the deck key is pressed"
 msgstr ""
 
 #: dailydeck/gui.py
@@ -290,6 +307,10 @@ msgstr ""
 
 #: dailydeck/gui.py
 msgid "Key opacity"
+msgstr ""
+
+#: dailydeck/gui.py
+msgid "Key press"
 msgstr ""
 
 #: dailydeck/gui.py
@@ -447,6 +468,10 @@ msgstr ""
 
 #: dailydeck/gui.py
 msgid "Settings …"
+msgstr ""
+
+#: dailydeck/gui.py
+msgid "Short tap"
 msgstr ""
 
 #: dailydeck/gui.py
@@ -674,6 +699,11 @@ msgstr ""
 msgid "unknown modifier “{modifier}” in “{shortcut}”"
 msgstr ""
 
+#: dailydeck/layout.py
+#, python-brace-format
+msgid "{seconds} s"
+msgstr ""
+
 #: dailydeck/profile_io.py
 msgid "not a Daily Deck profile file"
 msgstr ""
@@ -843,6 +873,11 @@ msgstr ""
 #: dailydeck/tray.py
 #, python-brace-format
 msgid "The sync folder {folder} is not reachable or has no configuration yet – using the configuration of this computer."
+msgstr ""
+
+#: dailydeck/layout.py
+msgctxt "decimal separator"
+msgid "."
 msgstr ""
 
 #: dailydeck/data/default_config.toml
@@ -1343,4 +1378,9 @@ msgstr ""
 #: dailydeck/data/default_config.toml
 msgctxt "default config"
 msgid "Zoom −"
+msgstr ""
+
+#: dailydeck/layout.py
+msgctxt "key badge"
+msgid "hold"
 msgstr ""

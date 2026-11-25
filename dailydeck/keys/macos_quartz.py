@@ -40,8 +40,6 @@ def accessibility_trusted(prompt: bool = False) -> bool:
     return bool(AXIsProcessTrustedWithOptions({kAXTrustedCheckOptionPrompt: prompt}))
 
 
-KEY_DELAY = 0.012
-
 # modifier name -> (virtual key code of the left key, event flag)
 MODIFIERS = {
     "ctrl": (0x3B, Q.kCGEventFlagMaskControl),
@@ -186,6 +184,7 @@ class QuartzKeySender(KeySender):
     name = "quartz"
 
     def __init__(self):
+        super().__init__()
         self._source = Q.CGEventSourceCreate(Q.kCGEventSourceStateHIDSystemState)
         self._layout = _Layout()
         self._layout.refresh()
@@ -231,43 +230,52 @@ class QuartzKeySender(KeySender):
             parts.append("+".join([*mods, *([f"vk{code:#04x}"] if code is not None else [])]))
         return " ".join(parts) + f"  [{self._layout.layout_id}]"
 
-    def send(self, chords: tuple[Chord, ...]) -> None:
+    def _ready(self) -> bool:
         if not self._trusted:
             self._trusted = accessibility_trusted()
             if not self._trusted:
                 log.warning(_(ACCESSIBILITY_HINT))
-                return
+                return False
+        return True
+
+    def _sequence(self, chords: tuple[Chord, ...]) -> list[list[tuple]]:
+        """Keys as ("mod", name), ("key", code) or ("media", type)."""
         self._layout.refresh()
+        sequences = []
         for chord in chords:
             if chord.key in MEDIA_KEYS:
-                self._media(MEDIA_KEYS[chord.key])
+                sequences.append([("media", MEDIA_KEYS[chord.key])])
                 continue
             mods, code = self.resolve(chord)
-            flags = 0
-            for m in mods:
-                key, flag = MODIFIERS[m]
-                flags |= flag
-                self._post(key, True, flags)
-            if code is not None:
-                key_flags = flags | (Q.kCGEventFlagMaskSecondaryFn | Q.kCGEventFlagMaskNumericPad
-                                     if code in _FN_KEYS else 0)
-                self._post(code, True, key_flags)
-                self._post(code, False, key_flags)
-            for m in reversed(mods):
-                key, flag = MODIFIERS[m]
-                flags &= ~flag
-                self._post(key, False, flags)
+            sequences.append([("mod", m) for m in mods] + ([("key", code)] if code is not None else []))
+        return sequences
+
+    def _emit(self, key: tuple, down: bool) -> None:
+        kind, value = key
+        if kind == "media":
+            self._media(value, down)
+            return
+        # every event carries the modifiers held right now (by any deck key)
+        flags = 0
+        for held_kind, held in self._down:
+            if held_kind == "mod":
+                flags |= MODIFIERS[held][1]
+        if kind == "mod":
+            self._post(MODIFIERS[value][0], down, flags)
+        else:
+            fn = Q.kCGEventFlagMaskSecondaryFn | Q.kCGEventFlagMaskNumericPad if value in _FN_KEYS else 0
+            self._post(value, down, flags | fn)
 
     def _post(self, code: int, down: bool, flags: int) -> None:
         event = Q.CGEventCreateKeyboardEvent(self._source, code, down)
         Q.CGEventSetFlags(event, flags)
         Q.CGEventPost(Q.kCGHIDEventTap, event)
-        time.sleep(KEY_DELAY)
 
-    def _media(self, key_type: int) -> None:
+    def _media(self, key_type: int, down: bool) -> None:
         make = NSEvent.otherEventWithType_location_modifierFlags_timestamp_windowNumber_context_subtype_data1_data2_
-        for down in (True, False):
-            state = 0xA if down else 0xB
-            event = make(14, (0, 0), state << 8, 0, 0, None, 8, (key_type << 16) | (state << 8), -1)  # NSSystemDefined
-            Q.CGEventPost(Q.kCGHIDEventTap, event.CGEvent())
-            time.sleep(KEY_DELAY)
+        state = 0xA if down else 0xB
+        event = make(14, (0, 0), state << 8, 0, 0, None, 8, (key_type << 16) | (state << 8), -1)  # NSSystemDefined
+        Q.CGEventPost(Q.kCGHIDEventTap, event.CGEvent())
+
+    def close(self) -> None:
+        self.release_all()

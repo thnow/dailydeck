@@ -11,7 +11,7 @@ from StreamDeck.ImageHelpers import PILHelper
 from StreamDeck.Transport.Transport import TransportError
 
 from .appicons import find_app_icon
-from .config import Config, ConfigError, Profile, active_config_path, load_config, local_path
+from .config import Button, Config, ConfigError, Profile, active_config_path, load_config, local_path
 from .focus import FocusUnavailable, WindowInfo, create_focus_provider
 from .i18n import _
 from .keys import KeySender, create_key_sender, format_shortcut
@@ -44,6 +44,7 @@ class DeckController:
         self._saved_config: Config | None = None  # real config while previewing
         self._lock = threading.RLock()
         self._jobs: queue.Queue = queue.Queue()
+        self._held: dict[int, list] = {}  # deck key -> keys held for "hold while pressed"
         self._key_size = deck.key_image_format()["size"]
         self._rows, self._cols = deck.key_layout()
 
@@ -129,6 +130,8 @@ class DeckController:
                 return
             self.paused = paused
             self._generation += 1  # cancel a running flash
+            if paused:
+                self._release_held()
             self._apply_brightness()
             if not paused:
                 self._draw_all()
@@ -186,40 +189,76 @@ class DeckController:
     # --- input -------------------------------------------------------------
 
     def _on_key(self, deck, key: int, pressed: bool) -> None:
+        # called from the deck's reader thread, one event after the other
         with self._lock:
-            if self.paused:
-                return
-            slot = self._slots[key] if key < len(self._slots) else None
-            if slot is None:
-                return
+            held = self._held.pop(key, None) if not pressed else None
+            button = None
+            if held is None and not self.paused:
+                slot = self._slots[key] if key < len(self._slots) else None
+                try:
+                    if isinstance(slot, NavSlot):
+                        if pressed:
+                            self.page += 1
+                            self._generation += 1  # cancel a running flash
+                            self._slots = self._layout()
+                            self._draw_all()
+                        return
+                    if slot is None or slot.empty:
+                        return
+                    self._draw(key, pressed=pressed)
+                except TransportError:
+                    return
+                if pressed and slot.chords and self.sending:
+                    button = slot
+            elif held is not None:
+                try:
+                    self._draw(key)
+                except TransportError:
+                    pass
+
+        # send outside the lock: holding keys takes time
+        if held is not None:
+            self.sender.release(held)
+        elif button is not None:
+            self._trigger(key, button)
+
+    def _trigger(self, key: int, button: Button) -> None:
+        if button.hold_while_pressed:
             try:
-                if isinstance(slot, NavSlot):
-                    if pressed:
-                        self.page += 1
-                        self._generation += 1  # cancel a running flash
-                        self._slots = self._layout()
-                        self._draw_all()
-                    return
-                if slot.empty:
-                    return
-                self._draw(key, pressed=pressed)
-            except TransportError:
+                held = self.sender.press(button.chords)
+            except Exception:  # noqa: BLE001
+                log.exception("failed to press %s", format_shortcut(button.chords))
                 return
-            if pressed and slot.chords and self.sending:
-                self._jobs.put(slot)
+            with self._lock:
+                self._held[key] = held
+        elif button.hold > 0:
+            # its own thread, so a long press does not block other buttons
+            threading.Thread(target=self._send, args=(button,), daemon=True, name="hold").start()
+        else:
+            self._jobs.put(button)  # short taps stay in order
+
+    def _send(self, button: Button) -> None:
+        try:
+            log.debug("send %s (hold %.2fs)", format_shortcut(button.chords), button.hold)
+            self.sender.send(button.chords, button.hold)
+        except Exception:  # noqa: BLE001 - keep the worker alive
+            log.exception("failed to send %s", format_shortcut(button.chords))
+
+    def _release_held(self) -> None:
+        with self._lock:
+            held, self._held = list(self._held.values()), {}
+        for keys in held:
+            self.sender.release(keys)
 
     def _worker(self) -> None:
         while True:
             button = self._jobs.get()
             if button is None:
                 return
-            try:
-                log.debug("send %s", format_shortcut(button.chords))
-                self.sender.send(button.chords)
-            except Exception:  # noqa: BLE001 - keep the worker alive
-                log.exception("failed to send %s", format_shortcut(button.chords))
+            self._send(button)
 
     def close(self) -> None:
+        self._release_held()
         self._jobs.put(None)
         try:
             with self.deck:

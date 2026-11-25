@@ -5,7 +5,6 @@ keyboard. Needs write access to /dev/uinput (see README).
 """
 
 import logging
-import time
 
 from evdev import UInput, ecodes
 
@@ -52,13 +51,11 @@ FALLBACK_CODES = {
     **{f"f{i}": getattr(ecodes, f"KEY_F{i}") for i in range(1, 25)},
 }
 
-KEY_DELAY = 0.012
-
-
 class UInputKeySender(KeySender):
     name = "uinput"
 
     def __init__(self, layout: str | None = None, variant: str | None = None):
+        super().__init__()
         if not layout:
             layout, detected_variant = detect_layout()
             variant = detected_variant if variant is None else variant
@@ -91,17 +88,10 @@ class UInputKeySender(KeySender):
             for ch in chords
         )
 
-    def send(self, chords: tuple[Chord, ...]) -> None:
-        sequences = [self.resolve(ch) for ch in chords]
-        for codes in sequences:
-            for code in codes:
-                self._ui.write(ecodes.EV_KEY, code, 1)
-                self._ui.syn()
-                time.sleep(KEY_DELAY)
-            for code in reversed(codes):
-                self._ui.write(ecodes.EV_KEY, code, 0)
-                self._ui.syn()
-                time.sleep(KEY_DELAY)
+    def _emit(self, code: int, down: bool) -> None:
+        self._ui.write(ecodes.EV_KEY, code, 1 if down else 0)
+        self._ui.syn()
 
     def close(self) -> None:
+        self.release_all()
         self._ui.close()
