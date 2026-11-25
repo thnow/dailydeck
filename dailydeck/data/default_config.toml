@@ -38,6 +38,9 @@
 #              drawn in the text colour, e.g. "symbol:play" (names from
 #              lucide.dev; the editor shows all of them under "Symbol …")
 #   font_size  maximum font size
+#   hold       seconds the shortcut stays pressed, e.g. 0.8 (default: a short tap)
+#   hold_while_pressed = true   keeps it pressed as long as the deck key is
+#              held down – for games (sprint, aim, push to talk …)
 #
 # Profile names and labels are translated into your language when this file
 # is created; after that it is yours to edit.

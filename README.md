@@ -12,6 +12,8 @@ shortcut is sent – matching your keyboard layout.
   plugged into a monitor works the same with whichever computer is connected.
 - **Profile editor** with live preview on the device, shortcut recording, built-in key
   symbols and profile import/export.
+- **Press duration per key** – a short tap, a fixed time or held as long as the deck key is
+  pressed, e.g. for games.
 - **App icon across the deck** – flashes up on a switch, then shines through the keys.
 - **Linux, macOS and Windows**, **English and German** (more welcome).
 

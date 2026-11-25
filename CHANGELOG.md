@@ -5,6 +5,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follo
 
 ## [Unreleased]
 
+### Added
+- **Press duration per key**, e.g. for games: hold the shortcut for a fixed time (`hold`, in
+  seconds) or as long as the deck key is pressed (`hold_while_pressed`). Set it in the editor
+  under *Key press*; such keys show a small marker. Several keys can be held at the same time,
+  and held keys are released when the deck is paused or disconnected.
+
 ## [0.3.1] – 2026-11-08
 
 ### Added

@@ -14,6 +14,7 @@ from . import symbols
 from .focus import WindowInfo
 from .i18n import _, pgettext
 from .keys import Chord, ShortcutError, parse_shortcut
+from .keys.base import MAX_HOLD
 
 log = logging.getLogger(__name__)
 
@@ -30,6 +31,8 @@ class Button:
     text_color: str | None = None
     icon: Path | None = None
     font_size: int | None = None
+    hold: float = 0.0  # seconds the shortcut stays pressed (0 = short tap)
+    hold_while_pressed: bool = False  # keep it pressed as long as the deck key is down
 
     @property
     def empty(self) -> bool:
@@ -394,7 +397,17 @@ def button_chords(data: dict, platform: str | None = None) -> tuple[Chord, ...]:
     return chosen
 
 
+def button_hold(data: dict) -> tuple[float, bool]:
+    """(seconds the shortcut stays pressed, hold while the deck key is pressed)."""
+    hold = data.get("hold", 0)
+    if isinstance(hold, bool) or not isinstance(hold, (int, float)) or not 0 <= hold <= MAX_HOLD:
+        raise ShortcutError(_("hold must be a number of seconds between 0 and {max}, not {value}").format(
+            max=f"{MAX_HOLD:g}", value=repr(hold)))
+    return float(hold), bool(data.get("hold_while_pressed", False))
+
+
 def load_button(data: dict, base_dir: Path) -> Button:
+    hold, hold_while_pressed = button_hold(data)
     return Button(
         label=data.get("label", ""),
         chords=button_chords(data),
@@ -402,6 +415,8 @@ def load_button(data: dict, base_dir: Path) -> Button:
         text_color=data.get("text_color"),
         icon=resolve_icon(base_dir, data.get("icon")),
         font_size=data.get("font_size") or None,
+        hold=hold,
+        hold_while_pressed=hold_while_pressed,
     )
 
 

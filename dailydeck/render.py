@@ -165,6 +165,7 @@ def render_key(
     backdrop: Image.Image | None = None,
     backdrop_brightness: float = 0.45,
     opacity: float = 1.0,
+    badge: str = "",
 ) -> Image.Image:
     """Render one key.
 
@@ -176,7 +177,7 @@ def render_key(
     w, h = size
     bg = ImageColor.getrgb(background)
     fg = ImageColor.getrgb(text_color) if text_color else _contrast_color(bg)
-    has_content = bool(label or hint or icon)
+    has_content = bool(label or hint or icon or badge)
     if pressed:
         bg, fg = fg, bg
 
@@ -207,6 +208,12 @@ def render_key(
                   stroke_width=stroke, stroke_fill=stroke_fill)
 
     area_top, area_bottom = pad, h - pad - hint_h
+    if badge:
+        # small marker in the top right corner, e.g. the press duration
+        badge_font = _font(_font_for(font, badge), 9)
+        draw.text((w - pad, pad - 1), badge, font=badge_font, fill=fg, anchor="ra",
+                  stroke_width=1, stroke_fill=stroke_fill)
+        area_top += 9
     if icon:
         icon_img = load_icon(icon, 256)
         if icon_img is not None and symbols.is_symbol_file(icon):

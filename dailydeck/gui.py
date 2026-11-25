@@ -54,6 +54,7 @@ from .config import (
     ConfigError,
     Profile,
     button_chords,
+    button_hold,
     current_platform,
     default_config_path,
     is_shared,
@@ -68,6 +69,7 @@ from .config import (
 from .fonts import font_spec, list_fonts, split_spec
 from .i18n import N_, _
 from .keys import ShortcutError
+from .keys.base import MAX_HOLD
 from .layout import NavSlot, backdrop_tiles, icon_for, page_count, page_slots, per_page, render_slot
 from .preview import clear_request, make_payload, read_ack, request_from_payload, send_request
 from .profile_io import PROFILE_SUFFIX, clean_profile, export_profile, import_profile, save_config
@@ -1091,6 +1093,20 @@ class MainWindow(QMainWindow):
         size_row.addStretch()
         size_row.addWidget(QPushButton(_("Clear key"), clicked=lambda: self._clear_tile(self._tile_of_slot())))
         bf.addRow(_("Font size"), size_row)
+        press_row = QHBoxLayout()
+        self.press_mode = QComboBox()
+        self.press_mode.addItem(_("Short tap"), "tap")
+        self.press_mode.addItem(_("Hold for a fixed time"), "fixed")
+        self.press_mode.addItem(_("Hold while the deck key is pressed"), "while")
+        self.press_mode.setToolTip(_("For games: how long the keys stay pressed"))
+        self.press_mode.currentIndexChanged.connect(self._button_changed)
+        self.hold_spin = QDoubleSpinBox(minimum=0.05, maximum=MAX_HOLD, singleStep=0.1, decimals=2,
+                                        suffix=" s", value=0.5)
+        self.hold_spin.valueChanged.connect(self._button_changed)
+        press_row.addWidget(self.press_mode)
+        press_row.addWidget(self.hold_spin)
+        press_row.addStretch()
+        bf.addRow(_("Key press"), press_row)
         rv.addWidget(self.button_box)
         rv.addStretch()
 
@@ -1558,6 +1574,10 @@ class MainWindow(QMainWindow):
             except ShortcutError:
                 for field in KEY_FIELDS:
                     button.pop(field, None)
+            try:
+                button_hold(button)
+            except ShortcutError:
+                button.pop("hold", None)
         if profile.get("title"):
             del profile["title"]
         ids = [m for m in profile.get("match", []) if not any(c in m for c in "*?[")]
@@ -1648,6 +1668,10 @@ class MainWindow(QMainWindow):
         self.button_text_color.set_color(b.get("text_color"))
         self.button_icon.set_path(b.get("icon"))
         self.font_size.setValue(int(b.get("font_size") or 0))
+        mode = "while" if b.get("hold_while_pressed") else "fixed" if b.get("hold") else "tap"
+        self.press_mode.setCurrentIndex(self.press_mode.findData(mode))
+        self.hold_spin.setValue(float(b.get("hold") or 0.5))
+        self.hold_spin.setEnabled(mode == "fixed")
         self._loading = False
         self._validate_keys()
 
@@ -1663,6 +1687,10 @@ class MainWindow(QMainWindow):
         button["text_color"] = self.button_text_color.color()
         button["icon"] = self.button_icon.path()
         button["font_size"] = self.font_size.value() or None
+        mode = self.press_mode.currentData()
+        self.hold_spin.setEnabled(mode == "fixed")
+        button["hold"] = round(self.hold_spin.value(), 2) if mode == "fixed" else None
+        button["hold_while_pressed"] = True if mode == "while" else None
         for key in [k for k, v in button.items() if v in (None, "")]:
             del button[key]
         self._validate_keys()
